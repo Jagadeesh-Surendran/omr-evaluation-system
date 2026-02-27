@@ -1,0 +1,4 @@
+# file: C:\Users\jaag1\AppData\Roaming\Python\Python314\site-packages\werkzeug\_reloader.py
+# hypothesis_version: 6.148.8
+
+['*.py', '*.pyc', '*.zip', '-m', '.', '.exe', '.git', '.hg', '.mypy_cache', '.nox', '.py', '.pyc', '.pytest_cache', '.tox', 'WERKZEUG_RUN_MAIN', '__file__', '__main__', '__package__', '__pycache__', 'auto', 'info', 'nt', 'observer', 'real_prefix', 'stat', 'true', 'watchdog', 'watchdog.observers']

@@ -1,0 +1,4 @@
+# file: C:\Users\jaag1\AppData\Roaming\Python\Python314\site-packages\engineio\base_server.py
+# hypothesis_version: 6.148.8
+
+[b'Method Not Found', b'OK', 1024, 1000000, 16777215, '*', '+', ',', '-', '/', '200 OK', '400 BAD REQUEST', '401 UNAUTHORIZED', '405 METHOD NOT FOUND', '; ', '=', 'Bad Request', 'Content-Type', 'HTTP_HOST', 'HTTP_ORIGIN', 'Invalid event', 'OPTIONS', 'OPTIONS, GET, POST', 'REQUEST_METHOD', 'Session not found', 'Unauthorized', '_', 'application/json', 'asyncio', 'big', 'client disconnect', 'connect', 'deflate', 'disconnect', 'engineio.server', 'event', 'eventlet', 'gevent', 'gevent_uwsgi', 'gzip', 'headers', 'io', 'message', 'name', 'no-websocket', 'ping timeout', 'polling', 'queue', 'queue_empty', 'response', 'server disconnect', 'status', 'text/plain', 'threading', 'transport close', 'transport error', 'true', 'utf-8', 'w', 'websocket', 'wsgi.url_scheme', '{scheme}://{host}']

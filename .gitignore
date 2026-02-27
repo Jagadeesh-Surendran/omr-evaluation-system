@@ -1,0 +1,84 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environment
+.venv/
+venv/
+ENV/
+env/
+.virtualenv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.pydevproject
+.settings/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Project Specific
+backend/temp_uploads/
+backend/debug_ollama.log
+backend/*.pth
+backend/bubble_dataset/
+backend/synthetic_omr_data/
+debug_vis/
+runs/
+yolov8_results/
+yolov8_runs/
+*.zip
+
+# Model weights
+*.pt
+*.pth
+*.onnx
+*.weights
+
+# Data
+train/
+yolov8_omr/
+
+# Temporary files
+*.tmp
+*.log
+temp_*
+*_converted.jpg
+
+# Test coverage
+.coverage
+htmlcov/
+.pytest_cache/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Environment variables
+.env
+.env.local

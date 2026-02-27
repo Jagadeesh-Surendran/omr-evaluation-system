@@ -1,0 +1,4 @@
+# file: C:\Users\jaag1\AppData\Roaming\Python\Python314\site-packages\werkzeug\debug\__init__.py
+# hypothesis_version: 6.148.8
+
+[b'"serial-number" = <([^>]+)', b'/', b'cookiesalt', b'pinsalt', 0.5, 5.0, 500, 4294967295, ' * Debugger PIN: %s', '-', '-c', '-d', '.localhost', '/console', '/etc/machine-id', '/proc/self/cgroup', '0', '127.0.0.1', '2', 'B', 'HTTP_HOST', 'MachineGuid', 'Strict', 'WERKZEUG_DEBUG_PIN', 'WERKZEUG_RUN_MAIN', '__debugger__', '__file__', '__module__', '__name__', '_pin', '_pin_cookie', 'app', 'application/json', 'auth', 'close', 'cmd', 'exhausted', 'f', 'frm', 'info', 'ioreg', 'off', 'pin', 'pinauth', 'printpin', 'rb', 'replace', 'resource', 's', 'shared', 'text/html', 'true', 'utf-8', 'warning', 'werkzeug.request', 'win32', 'wsgi.errors', 'yes', '|']

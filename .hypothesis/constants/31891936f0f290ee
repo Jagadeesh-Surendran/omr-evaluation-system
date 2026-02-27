@@ -1,0 +1,4 @@
+# file: C:\Users\jaag1\AppData\Roaming\Python\Python314\site-packages\ultralytics\utils\patches.py
+# hypothesis_version: 6.148.8
+
+['.avif', '.heic', '.tif', '.tiff', 'L', 'RGB', 'onnx', 'pi-heif', 'unicode_escape', 'weights_only']

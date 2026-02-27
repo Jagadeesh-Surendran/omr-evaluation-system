@@ -1,0 +1,4 @@
+# file: C:\Users\jaag1\AppData\Roaming\Python\Python314\site-packages\ollama\_utils.py
+# hypothesis_version: 6.148.8
+
+['(?:\\(([^)]*)\\)|:)\\s*', ', ', ':', '_', '__annotations__', '__doc__', '__signature__', 'anyOf', 'args', 'args:', 'description', 'function', 'null', 'properties', 'raises:', 'required', 'returns:', 'string', 'type', 'yields:']

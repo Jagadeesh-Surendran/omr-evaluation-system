@@ -1,0 +1,4 @@
+# file: C:\Users\jaag1\AppData\Roaming\Python\Python314\site-packages\socketio\base_client.py
+# hypothesis_version: 6.148.8
+
+[0.5, '*', '/', '__disconnect_final', 'connect', 'connect_error', 'default', 'disconnect', 'engineio_logger', 'handle_sigint', 'json', 'logger', 'message', 'msgpack', 'socketio.client']

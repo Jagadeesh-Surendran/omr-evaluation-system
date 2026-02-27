@@ -1,0 +1,4 @@
+# file: C:\Users\jaag1\AppData\Roaming\Python\Python314\site-packages\flask_socketio\__init__.py
+# hypothesis_version: 6.148.8
+
+[400, 5000, '*', '/', '127.0.0.1', ':', 'FLASK_RUN_FROM_CLI', 'SERVER_NAME', '_session', 'app_ctx', 'args', 'async_mode', 'broadcast', 'ca_certs', 'callback', 'cert_reqs', 'certfile', 'channel', 'ciphers', 'client_manager', 'connect', 'debug', 'default', 'eventlet', 'extensions', 'extra_files', 'flask-socketio', 'flask.app', 'gevent', 'globals', 'ignore_queue', 'include_self', 'json', 'kafka://', 'keyfile', 'log_output', 'manage_session', 'message', 'message_queue', 'modified', 'namespace', 'path', 'redis://', 'rediss://', 'reloader_options', 'resource', 'room', 'saved_session', 'server_side', 'session', 'sid', 'skip_sid', 'socket.io', 'socketio', 'ssl_version', 'suppress_ragged_eofs', 'threading', 'timeout', 'to', 'use_reloader', 'warning', 'zmq']

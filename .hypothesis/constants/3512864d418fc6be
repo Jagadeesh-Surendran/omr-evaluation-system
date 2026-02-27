@@ -1,0 +1,4 @@
+# file: C:\Users\jaag1\Desktop\desktop\siva omr project\backend\ollama_client.py
+# hypothesis_version: 6.148.8
+
+[2.0, 100, 200, 1000, 1024, '%Y-%m-%d %H:%M:%S', '.pdf', 'CREATE_NO_WINDOW', '\\b([ABCDE])\\b', '^[ABCDE]$', '__main__', '_converted.jpg', '```', 'a', 'content', 'debug_ollama.log', 'images', 'json', 'message', 'moondream', 'ollama', 'role', 'serve', 'user', 'utf-8', '{', '}']

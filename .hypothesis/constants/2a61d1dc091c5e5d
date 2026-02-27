@@ -1,0 +1,4 @@
+# file: C:\Users\jaag1\Desktop\desktop\siva omr project\backend\omr_engine.py
+# hypothesis_version: 6.148.8
+
+[0.0, 5e-05, 0.02, 0.15, 0.22, 0.3, 0.35, 0.4, 0.5, 0.7, 0.8, 2.0, 100, 255, 'A', 'B', 'BLANK', 'C', 'D', 'E', 'MULTI', 'No bubbles detected.', 'UNKNOWN', 'actual_answer', 'confidence', 'correct_answer', 'float32', 'is_correct', 'left-to-right', 'marked_answer', 'question_number', 'selected_option', 'top-to-bottom']

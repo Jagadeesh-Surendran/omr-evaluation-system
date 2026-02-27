@@ -1,0 +1,4 @@
+# file: C:\Users\jaag1\AppData\Roaming\Python\Python314\site-packages\wsproto\handshake.py
+# hypothesis_version: 6.148.8
+
+[b'%s', b'%s; %s', b', ', b'0', b'13', b'Connection', b'GET', b'Host', b'Sec-WebSocket-Accept', b'Sec-WebSocket-Extensions', b'Sec-WebSocket-Key', b'Sec-WebSocket-Protocol', b'Sec-WebSocket-Version', b'Switching Protocols', b'Upgrade', b'connection', b'content-length', b'host', b'sec-websocket-accept', b'sec-websocket-extensions', b'sec-websocket-key', b'sec-websocket-protocol', b'sec-websocket-version', b'upgrade', b'websocket', 101, 400, 426, ', ', ';', 'Bad HTTP message', 'Bad accept token', 'Sequence[Extension]', 'Sequence[str]', 'ascii', 'idna', 'upgrade']

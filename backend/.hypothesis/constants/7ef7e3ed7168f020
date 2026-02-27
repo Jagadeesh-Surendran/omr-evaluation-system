@@ -1,0 +1,4 @@
+# file: C:\Users\jaag1\AppData\Roaming\Python\Python314\site-packages\ollama\_client.py
+# hypothesis_version: 6.148.8
+
+[200, 443, 1024, 11434, '/', '/api/chat', '/api/copy', '/api/create', '/api/delete', '/api/embed', '/api/embeddings', '/api/generate', '/api/ps', '/api/pull', '/api/push', '/api/show', '/api/tags', '0.0.0', '127.0.0.1', '://', 'Accept', 'Bearer ', 'Content-Type', 'DELETE', 'GET', 'OLLAMA_API_KEY', 'OLLAMA_HOST', 'POST', 'T', 'User-Agent', 'application/json', 'authorization', 'error', 'high', 'http', 'https', 'images', 'json', 'low', 'medium', 'ollama', 'rb', 'success']

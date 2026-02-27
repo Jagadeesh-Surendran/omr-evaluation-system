@@ -1,0 +1,4 @@
+# file: C:\Users\jaag1\AppData\Roaming\Python\Python314\site-packages\ultralytics\models\yolo\world\train_world.py
+# hypothesis_version: 6.148.8
+
+['channels', 'grounding_data', 'img_path', 'json_file', 'lvis', 'minival', 'names', 'nc', 'object', 'path', 'train', 'val', 'yolo_data']

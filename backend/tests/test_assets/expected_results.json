@@ -1,0 +1,82 @@
+{
+  "total_questions": 10,
+  "correct": 7,
+  "wrong": 3,
+  "percentage": 70.0,
+  "master_key": {
+    "1": "A",
+    "2": "B",
+    "3": "C",
+    "4": "D",
+    "5": "A",
+    "6": "B",
+    "7": "C",
+    "8": "D",
+    "9": "A",
+    "10": "B"
+  },
+  "student_answers": {
+    "1": "A",
+    "2": "B",
+    "3": "A",
+    "4": "D",
+    "5": "A",
+    "6": "C",
+    "7": "C",
+    "8": "D",
+    "9": "B",
+    "10": "B"
+  },
+  "per_question": {
+    "1": {
+      "correct_answer": "A",
+      "student_answer": "A",
+      "is_correct": true
+    },
+    "2": {
+      "correct_answer": "B",
+      "student_answer": "B",
+      "is_correct": true
+    },
+    "3": {
+      "correct_answer": "C",
+      "student_answer": "A",
+      "is_correct": false
+    },
+    "4": {
+      "correct_answer": "D",
+      "student_answer": "D",
+      "is_correct": true
+    },
+    "5": {
+      "correct_answer": "A",
+      "student_answer": "A",
+      "is_correct": true
+    },
+    "6": {
+      "correct_answer": "B",
+      "student_answer": "C",
+      "is_correct": false
+    },
+    "7": {
+      "correct_answer": "C",
+      "student_answer": "C",
+      "is_correct": true
+    },
+    "8": {
+      "correct_answer": "D",
+      "student_answer": "D",
+      "is_correct": true
+    },
+    "9": {
+      "correct_answer": "A",
+      "student_answer": "B",
+      "is_correct": false
+    },
+    "10": {
+      "correct_answer": "B",
+      "student_answer": "B",
+      "is_correct": true
+    }
+  }
+}

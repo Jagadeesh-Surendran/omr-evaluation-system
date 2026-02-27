@@ -1,0 +1,4 @@
+# file: C:\Users\jaag1\AppData\Roaming\Python\Python314\site-packages\ultralytics\models\yolo\pose\train.py
+# hypothesis_version: 6.148.8
+
+['box_loss', 'channels', 'cls_loss', 'dfl_loss', 'flow_model', 'kobj_loss', 'kpt_names', 'kpt_shape', 'nc', 'pose', 'pose_loss', 'rle_loss', 'task']

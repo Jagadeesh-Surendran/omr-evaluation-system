@@ -1,0 +1,4 @@
+# file: C:\Users\jaag1\AppData\Roaming\Python\Python314\site-packages\engineio\async_client.py
+# hypothesis_version: 6.148.8
+
+[1000.0, 200, 300, ' async handler error', ' handler error', '&sid=', '<binary>', 'Connection error', 'Content-Type', 'GET', 'POST', 'UNKNOWN', '_connect_', 'close', 'connect', 'connected', 'cookie', 'disconnect', 'disconnected', 'disconnecting', 'engine.io', 'headers', 'message', 'no OPEN packet', 'pingInterval', 'pingTimeout', 'polling', 'probe', 'run_async', 'sid', 'ssl', 'text/plain', 'timeout', 'upgrades', 'utf-8', 'websocket']

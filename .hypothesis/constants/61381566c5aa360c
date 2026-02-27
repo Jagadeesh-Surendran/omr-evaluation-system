@@ -1,0 +1,4 @@
+# file: C:\Users\jaag1\AppData\Roaming\Python\Python314\site-packages\werkzeug\debug\tbtools.py
+# hypothesis_version: 6.148.8
+
+['-', '-{2,}', 'Console', 'Syntax Error', 'SyntaxError', '__name__', '__traceback_hide__', '__traceback_info__', '_cache_all_frames', '_cache_console', '_cache_info', '_cache_is_library', '_te', 'after', 'after_and_this', 'before', 'before_and_this', 'classes', 'codeop', 'colno', 'console', 'current', 'description', 'end_colno', 'evalex', 'evalex_trusted', 'exception', 'exception_type', 'false', 'filename', 'frames', 'function_name', 'global_ns', 'globals', 'id', 'library', 'lineno', 'lines', 'local_ns', 'locals', 'name', 'plaintext', 'plaintext_cs', 'reset', 'reset_and_this', 'secret', 'summary', 'title', 'traceback', 'tracebacklimit', 'true']

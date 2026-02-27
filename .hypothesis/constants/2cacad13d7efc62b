@@ -1,0 +1,4 @@
+# file: C:\Users\jaag1\Desktop\desktop\siva omr project\backend\pipeline.py
+# hypothesis_version: 6.148.8
+
+[0.0, 0.1, 0.15, 0.3, '?', 'Filename', 'Name', 'Score (%)', 'Student ID', 'UNKNOWN', '[OMRPipeline] Ready.', 'answer_region', 'best.pt', 'correct_answer', 'filename', 'form_type', 'id', 'is_correct', 'marked_answer', 'name', 'omr_yolov8n', 'personal_data', 'question_details', 'question_number', 'raw_score', 'regions_detected', 'score', 'sheet_id_region', 'sign', 'student_id', 'weights', 'yolov8_runs', '✓', '✗']

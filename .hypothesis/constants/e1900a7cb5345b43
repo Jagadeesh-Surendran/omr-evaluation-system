@@ -1,0 +1,4 @@
+# file: C:\Users\jaag1\AppData\Roaming\Python\Python314\site-packages\engineio\async_server.py
+# hypothesis_version: 6.148.8
+
+[1000, ' async handler error', ' handler error', ',', '/', '4', ';', 'Content-Encoding', 'EIO', 'GET', 'HTTP_ACCEPT_ENCODING', 'HTTP_ORIGIN', 'HTTP_UPGRADE', 'Invalid transport', 'Lax', 'OPTIONS', 'POST', 'QUERY_STRING', 'REQUEST_METHOD', 'SameSite', 'Set-Cookie', '_', 'aiohttp', 'asgi', 'bad-jsonp-index', 'bad-origin', 'bad-sid', 'bad-transport', 'bad-upgrade', 'bad-version', 'connect', 'create_route', 'disconnect', 'engine.io', 'headers', 'j', 'make_response', 'maxPayload', 'name', 'path', 'pingInterval', 'pingTimeout', 'polling', 'response', 'run_async', 'sanic', 'sid', 'status', 'tornado', 'translate_request', 'transport', 'upgrades', 'websocket']

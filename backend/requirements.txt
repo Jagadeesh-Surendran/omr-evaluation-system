@@ -1,0 +1,13 @@
+Flask
+Flask-Cors
+opencv-python
+numpy
+imutils
+pandas
+torch
+torchvision
+openpyxl
+ollama
+pymupdf
+pyserial
+flask-socketio

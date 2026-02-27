@@ -1,0 +1,4 @@
+# file: C:\Users\jaag1\AppData\Roaming\Python\Python314\site-packages\engineio\client.py
+# hypothesis_version: 6.148.8
+
+[1000.0, 200, 300, ' handler error', '&sid=', '://', ';', '; ', '<binary>', 'Authorization', 'Basic ', 'Connection error', 'Content-Type', 'GET', 'POST', 'UNKNOWN', '_connect_', 'ca_certs', 'cert_reqs', 'certfile', 'connect', 'connected', 'cookie', 'disconnect', 'disconnected', 'disconnecting', 'enable_multithread', 'engine.io', 'engineio.client', 'header', 'http', 'http_proxy_auth', 'http_proxy_host', 'http_proxy_port', 'https', 'keyfile', 'message', 'no OPEN packet', 'pingInterval', 'pingTimeout', 'polling', 'probe', 'run_async', 'scheme://', 'sid', 'sslopt', 'text/plain', 'timeout', 'upgrades', 'utf-8', 'websocket', 'ws', 'ws://', 'wss', '{}:{}']

@@ -1,0 +1,4 @@
+# file: C:\Users\jaag1\AppData\Roaming\Python\Python314\site-packages\simple_websocket\aiows.py
+# hypothesis_version: 6.148.8
+
+[b'\r\n', b'GET / HTTP/1.1\r\n', 400, 443, 4096, '?', 'Invalid request', 'Message is too big', 'Ping/Pong timeout', 'aiohttp', 'custom', 'headers', 'https', 'sock', 'socket', 'unknown', 'wss']

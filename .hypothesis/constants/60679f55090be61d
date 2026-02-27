@@ -1,0 +1,4 @@
+# file: C:\Users\jaag1\AppData\Roaming\Python\Python314\site-packages\socketio\async_client.py
+# hypothesis_version: 6.148.8
+
+['*', ', ', '/', 'Already connected', 'Received ack [%s]', 'Unknown packet type.', '__disconnect_final', 'connect', 'connect_error', 'connected', 'disconnect', 'message', 'sid', 'socket.io', 'socketio.client']

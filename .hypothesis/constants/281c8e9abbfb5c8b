@@ -1,0 +1,4 @@
+# file: C:\Users\jaag1\AppData\Roaming\Python\Python314\site-packages\socketio\packet.py
+# hypothesis_version: 6.148.8
+
+[100, ',', '-', '/', ':', '?', 'ACK', 'BINARY_ACK', 'BINARY_EVENT', 'CONNECT', 'CONNECT_ERROR', 'DISCONNECT', 'EVENT', '_placeholder', 'data', 'id', 'id field is too long', 'nsp', 'num', 'too many attachments', 'type']

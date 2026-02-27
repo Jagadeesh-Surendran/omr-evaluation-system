@@ -1,0 +1,4 @@
+# file: C:\Users\jaag1\AppData\Roaming\Python\Python314\site-packages\engineio\socket.py
+# hypothesis_version: 6.148.8
+
+[',', '0', '<binary>', 'CONTENT_LENGTH', 'HTTP_CONNECTION', 'HTTP_UPGRADE', 'UNKNOWN', '_sock', '_upgrade_', 'disconnect', 'message', 'packet is too large', 'probe', 'settimeout', 'socket', 'upgrade', 'utf-8', 'websocket', 'wsgi.input']
