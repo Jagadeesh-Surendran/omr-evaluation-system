@@ -349,25 +349,9 @@ function getToastIcon(type) {
   }
 }
 
-/**
- * Placeholder render functions (will be implemented in component files)
- */
-function renderModeSelectionScreen() {
-  return '<div class="loading">Loading mode selection...</div>';
-}
-
-function renderManualWorkflow() {
-  return '<div class="loading">Loading manual workflow...</div>';
-}
-
-function renderAIWorkflowPhase1() {
-  return '<div class="loading">Loading AI workflow...</div>';
-}
-
-function renderAIWorkflowPhase2() {
-  return '<div class="loading">Loading AI workflow phase 2...</div>';
-}
-
-function renderResultsView() {
-  return '<div class="loading">Loading results...</div>';
-}
+// Render functions are implemented in component files:
+// - renderModeSelectionScreen() in js/components/mode-selection.js
+// - renderManualWorkflow() in js/components/manual-workflow.js
+// - renderAIWorkflowPhase1() in js/components/ai-workflow.js
+// - renderAIWorkflowPhase2() in js/components/ai-workflow.js
+// - renderResultsView() in js/components/results-view.js

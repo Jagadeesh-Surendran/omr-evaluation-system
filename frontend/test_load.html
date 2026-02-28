@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Component Load Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .success { color: green; }
+        .error { color: red; }
+    </style>
+</head>
+<body>
+    <h1>Component Load Test</h1>
+    <div id="results"></div>
+
+    <script src="js/constants.js"></script>
+    <script src="js/state.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/utils/validation.js"></script>
+    <script src="js/utils/file-handler.js"></script>
+    <script src="js/utils/csv-parser.js"></script>
+    <script src="js/utils/helpers.js"></script>
+    <script src="js/utils/ui-components.js"></script>
+    <script src="js/components/mode-selection.js"></script>
+    <script src="js/components/manual-workflow.js"></script>
+    <script src="js/components/ai-workflow.js"></script>
+    <script src="js/components/progress-modal.js"></script>
+    <script src="js/components/results-view.js"></script>
+    <script src="js/components/export.js"></script>
+
+    <script>
+        const results = document.getElementById('results');
+        
+        function test(name, fn) {
+            try {
+                const exists = typeof fn !== 'undefined';
+                results.innerHTML += `<p class="${exists ? 'success' : 'error'}">${exists ? '✅' : '❌'} ${name}</p>`;
+                return exists;
+            } catch (e) {
+                results.innerHTML += `<p class="error">❌ ${name}: ${e.message}</p>`;
+                return false;
+            }
+        }
+
+        // Test constants
+        test('SCREENS', SCREENS);
+        test('EVALUATION_MODES', EVALUATION_MODES);
+        test('TOAST_TYPES', TOAST_TYPES);
+        
+        // Test state
+        test('appState', appState);
+        
+        // Test functions
+        test('renderModeSelectionScreen', renderModeSelectionScreen);
+        test('renderManualWorkflow', renderManualWorkflow);
+        test('renderAIWorkflowPhase1', renderAIWorkflowPhase1);
+        test('renderAIWorkflowPhase2', renderAIWorkflowPhase2);
+        test('renderResultsView', renderResultsView);
+        
+        // Try to render
+        results.innerHTML += '<hr><h2>Render Test:</h2>';
+        try {
+            const html = renderModeSelectionScreen();
+            if (html && html.includes('mode-selection-container')) {
+                results.innerHTML += '<p class="success">✅ Mode selection renders correctly!</p>';
+                results.innerHTML += '<div style="border:1px solid #ccc; padding:10px; margin:10px 0;">' + html + '</div>';
+            } else {
+                results.innerHTML += '<p class="error">❌ Mode selection render failed</p>';
+                results.innerHTML += '<pre>' + html + '</pre>';
+            }
+        } catch (e) {
+            results.innerHTML += '<p class="error">❌ Error: ' + e.message + '</p>';
+        }
+    </script>
+</body>
+</html>
