@@ -38,12 +38,12 @@ class ExtractionConfig:
     """
     
     # Extraction behavior
-    max_extraction_passes: int = 5  # Increased from 3 to 5 for better coverage
-    extraction_timeout_seconds: int = 45  # Increased from 30 to 45 for large question sets
+    max_extraction_passes: int = 2  # Reduced from 5 to 2 for faster processing
+    extraction_timeout_seconds: int = 30  # Reduced from 45 to 30
     
     # Model configuration
-    primary_model: str = "moondream"
-    fallback_model: Optional[str] = None  # e.g., "llava"
+    primary_model: str = "moondream"  # Fast lightweight vision model
+    fallback_model: Optional[str] = None  # No fallback to keep it fast
     
     # Image preprocessing
     min_dpi_for_pdf: int = 200
@@ -86,30 +86,11 @@ class ExtractionConfig:
 # Prompt Strategies for Multi-Pass Extraction
 # ---------------------------------------------------------------------------
 
-# Pass 1: Detailed structured prompt with explicit format instructions
-# Purpose: Provides comprehensive guidance to the AI model with clear rules
-#          and examples. This is the primary extraction strategy that works
-#          best when the model needs detailed context about the task.
-PROMPT_PASS_1 = """You are an answer key extraction system. Analyze this question paper image and extract ALL the correct answers you can see.
+# Pass 1: Simple and direct prompt for moondream
+PROMPT_PASS_1 = """What are the answers in this answer key? List them as JSON like {"1":"A","2":"B","3":"C"}"""
 
-Return a JSON object with this exact format:
-{"1":"A","2":"C","3":"B","4":"D","5":"E",...}
-
-IMPORTANT:
-- Extract ALL questions visible in the image (could be 10, 50, 100+ questions)
-- Keys must be question numbers (as strings)
-- Values must be single letters: A, B, C, D, or E
-- Include EVERY question with a clearly visible answer
-- Do not stop at 5 or 10 questions - extract ALL of them
-- If no answers are found, return {}
-- Do not include any explanation or markdown formatting
-"""
-
-# Pass 2: Minimal prompt for quick extraction
-# Purpose: Uses minimal instructions to avoid over-complicating the task.
-#          Some models perform better with concise prompts. This strategy
-#          is used as a fallback when the detailed prompt fails.
-PROMPT_PASS_2 = """Extract ALL answers from this image as JSON: {"1":"A","2":"B",...,"100":"C"}. Extract every question you see. Nothing else."""
+# Pass 2: Alternative simple prompt
+PROMPT_PASS_2 = """Extract answer key from image. Format: {"1":"A","2":"B"}. Include all answers."""
 
 # Pass 3: Alternative phrasing with different instruction style
 # Purpose: Rephrases the extraction request using different terminology.
@@ -600,36 +581,9 @@ def extract_answer_key_from_image(
     ]
     
     try:
-        # ----- PDF Conversion (if needed) ---------------------------------
-        if image_path.lower().endswith(".pdf"):
-            log_debug("Detected PDF. Converting to image...")
-            pdf_start = time.time()
-            try:
-                temp_image_path = convert_pdf_to_image(image_path, dpi=config.min_dpi_for_pdf)
-                image_to_process = temp_image_path
-                pdf_duration = (time.time() - pdf_start) * 1000
-                logger.log_preprocessing("PDF conversion", pdf_duration)
-            except Exception as pdf_err:
-                log_debug(f"PDF conversion failed: {pdf_err}")
-                total_duration = (time.time() - extraction_start_time) * 1000
-                return {}, [f"PDF conversion failed: {str(pdf_err)}"], total_duration
-        else:
-            image_to_process = image_path
-
-        # ----- Image Preprocessing (if enabled) ---------------------------
-        if config.enable_preprocessing:
-            preprocess_start = time.time()
-            try:
-                temp_preprocessed_path = preprocess_image(
-                    image_to_process, 
-                    target_width=config.target_image_width
-                )
-                image_to_process = temp_preprocessed_path
-                preprocess_duration = (time.time() - preprocess_start) * 1000
-                logger.log_preprocessing("Image enhancement", preprocess_duration)
-            except Exception as preprocess_err:
-                log_debug(f"[PREPROCESSING] Warning: Preprocessing failed, using original image: {preprocess_err}")
-                # Continue with original image if preprocessing fails
+        # ----- Use file directly (Ollama handles both images and PDFs) ----
+        image_to_process = image_path
+        log_debug(f"Using file directly: {image_path}")
         
         # ----- Multi-Pass Extraction Loop ---------------------------------
         best_result = {}
