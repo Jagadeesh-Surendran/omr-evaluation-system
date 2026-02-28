@@ -147,16 +147,7 @@ ERROR_MESSAGES = {
     }
 }
 
-# Serve Frontend Static Files
-@app.route('/')
-def index():
-    return send_from_directory('../frontend', 'index.html')
-
-@app.route('/<path:path>')
-def static_proxy(path):
-    # Try serving from frontend first
-    return send_from_directory('../frontend', path)
-
+# API Routes - Must be defined BEFORE catch-all route
 @app.route('/api/health', methods=['GET'])
 def health():
     return jsonify({"status": "ok", "service": "EvalGenius AI Backend"}), 200
@@ -1771,6 +1762,21 @@ def handle_subscribe_progress(data):
     }
     
     emit('progress_update', progress_message)
+
+
+# ---------------------------------------------------------------------------
+# Frontend Static File Serving - MUST BE LAST (catch-all route)
+# ---------------------------------------------------------------------------
+
+@app.route('/')
+def index():
+    """Serve the main frontend HTML file"""
+    return send_from_directory('../frontend', 'index.html')
+
+@app.route('/<path:path>')
+def static_proxy(path):
+    """Serve frontend static files (CSS, JS, images, etc.)"""
+    return send_from_directory('../frontend', path)
 
 
 if __name__ == '__main__':

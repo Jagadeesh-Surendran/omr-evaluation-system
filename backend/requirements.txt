@@ -15,3 +15,5 @@ hypothesis
 pytest
 pytest-cov
 psutil
+gunicorn==21.2.0
+ultralytics

@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manual Evaluation API Integration Test</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 1200px;
+      margin: 20px auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .test-container {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+    }
+    h1 {
+      color: #333;
+      border-bottom: 2px solid #4CAF50;
+      padding-bottom: 10px;
+    }
+    h2 {
+      color: #555;
+      margin-top: 20px;
+    }
+    .test-result {
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 4px;
+    }
+    .test-result.pass {
+      background: #d4edda;
+      border: 1px solid #c3e6cb;
+      color: #155724;
+    }
+    .test-result.fail {
+      background: #f8d7da;
+      border: 1px solid #f5c6cb;
+      color: #721c24;
+    }
+    .test-result.info {
+      background: #d1ecf1;
+      border: 1px solid #bee5eb;
+      color: #0c5460;
+    }
+    button {
+      background: #4CAF50;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      margin: 5px;
+    }
+    button:hover {
+      background: #45a049;
+    }
+    button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+    .code-block {
+      background: #f4f4f4;
+      padding: 10px;
+      border-radius: 4px;
+      font-family: monospace;
+      overflow-x: auto;
+      margin: 10px 0;
+    }
+    .status {
+      font-weight: bold;
+      padding: 5px 10px;
+      border-radius: 4px;
+      display: inline-block;
+      margin: 5px 0;
+    }
+    .status.ready { background: #d4edda; color: #155724; }
+    .status.not-ready { background: #fff3cd; color: #856404; }
+    .status.running { background: #cce5ff; color: #004085; }
+    .status.complete { background: #d4edda; color: #155724; }
+    .status.error { background: #f8d7da; color: #721c24; }
+  </style>
+</head>
+<body>
+  <div class="test-container">
+    <h1>Manual Evaluation API Integration Test</h1>
+    <p>This test verifies that the <code>startManualEvaluation()</code> function correctly integrates with the backend API.</p>
+    
+    <h2>Test Requirements (Task 3.15)</h2>
+    <ul>
+      <li>✓ Create <code>startManualEvaluation()</code> function</li>
+      <li>✓ Build FormData with omr_files, answer_key_csv, and num_options</li>
+      <li>✓ Call <code>/api/evaluate_batch</code> endpoint</li>
+      <li>✓ Handle response and errors</li>
+      <li>✓ Requirements: 2.8</li>
+    </ul>
+    
+    <h2>Function Verification</h2>
+    <div id="function-check"></div>
+    
+    <h2>Integration Test</h2>
+    <p>This test will verify the function structure and API call setup (without actually calling the backend).</p>
+    <button onclick="runIntegrationTest()">Run Integration Test</button>
+    <div id="test-results"></div>
+  </div>
+
+  <!-- Load dependencies -->
+  <script src="../js/constants.js"></script>
+  <script src="../js/state.js"></script>
+  <script src="../js/api.js"></script>
+  <script src="../js/utils/ui-components.js"></script>
+  <script src="../js/components/manual-workflow.js"></script>
+  
+  <script>
+    // Verify function exists
+    function checkFunctionExists() {
+      const checkDiv = document.getElementById('function-check');
+      
+      if (typeof startManualEvaluation === 'function') {
+        checkDiv.innerHTML = '<div class="test-result pass">✓ startManualEvaluation() function exists</div>';
+        
+        // Check if it's async
+        const isAsync = startManualEvaluation.constructor.name === 'AsyncFunction';
+        if (isAsync) {
+          checkDiv.innerHTML += '<div class="test-result pass">✓ Function is async (can handle API calls)</div>';
+        } else {
+          checkDiv.innerHTML += '<div class="test-result fail">✗ Function is not async</div>';
+        }
+      } else {
+        checkDiv.innerHTML = '<div class="test-result fail">✗ startManualEvaluation() function not found</div>';
+      }
+    }
+    
+    // Run integration test
+    async function runIntegrationTest() {
+      const resultsDiv = document.getElementById('test-results');
+      resultsDiv.innerHTML = '<div class="test-result info">Running tests...</div>';
+      
+      const results = [];
+      
+      // Test 1: Function exists and is callable
+      try {
+        if (typeof startManualEvaluation === 'function') {
+          results.push({ pass: true, message: 'Function exists and is callable' });
+        } else {
+          results.push({ pass: false, message: 'Function does not exist' });
+        }
+      } catch (e) {
+        results.push({ pass: false, message: 'Error checking function: ' + e.message });
+      }
+      
+      // Test 2: Check required state functions exist
+      const requiredFunctions = [
+        'isReadyToEvaluate',
+        'updateProgress',
+        'updateResults',
+        'showToast',
+        'showScreen',
+        'callAPI'
+      ];
+      
+      for (const funcName of requiredFunctions) {
+        if (typeof window[funcName] === 'function') {
+          results.push({ pass: true, message: `Required function ${funcName}() exists` });
+        } else {
+          results.push({ pass: false, message: `Required function ${funcName}() not found` });
+        }
+      }
+      
+      // Test 3: Check constants exist
+      const requiredConstants = ['API_ENDPOINTS', 'SCREENS', 'TOAST_TYPES'];
+      for (const constName of requiredConstants) {
+        if (typeof window[constName] !== 'undefined') {
+          results.push({ pass: true, message: `Required constant ${constName} exists` });
+        } else {
+          results.push({ pass: false, message: `Required constant ${constName} not found` });
+        }
+      }
+      
+      // Test 4: Check API endpoint is defined
+      if (API_ENDPOINTS && API_ENDPOINTS.EVALUATE_BATCH) {
+        results.push({ pass: true, message: `API endpoint EVALUATE_BATCH is defined: ${API_ENDPOINTS.EVALUATE_BATCH}` });
+      } else {
+        results.push({ pass: false, message: 'API endpoint EVALUATE_BATCH not defined' });
+      }
+      
+      // Test 5: Verify state structure
+      if (appState && appState.uploadedFiles && appState.evaluationConfig) {
+        results.push({ pass: true, message: 'App state structure is correct' });
+      } else {
+        results.push({ pass: false, message: 'App state structure is incorrect' });
+      }
+      
+      // Test 6: Mock test - verify function behavior with mock data
+      try {
+        // Set up mock state
+        appState.uploadedFiles.omrSheets = [
+          new File(['test'], 'test1.jpg', { type: 'image/jpeg' }),
+          new File(['test'], 'test2.jpg', { type: 'image/jpeg' })
+        ];
+        appState.uploadedFiles.answerKey = new File(['1,A\n2,B'], 'answer_key.csv', { type: 'text/csv' });
+        appState.answerKeys.manual = { '1': 'A', '2': 'B' };
+        appState.evaluationConfig.numOptions = 5;
+        
+        // Check if ready to evaluate
+        if (isReadyToEvaluate()) {
+          results.push({ pass: true, message: 'isReadyToEvaluate() returns true with valid data' });
+        } else {
+          results.push({ pass: false, message: 'isReadyToEvaluate() returns false with valid data' });
+        }
+        
+        // Note: We don't actually call startManualEvaluation() because it would make a real API call
+        results.push({ pass: true, message: 'Mock data setup successful (actual API call not tested)' });
+        
+      } catch (e) {
+        results.push({ pass: false, message: 'Error in mock test: ' + e.message });
+      }
+      
+      // Display results
+      let html = '<h3>Test Results</h3>';
+      let passCount = 0;
+      let failCount = 0;
+      
+      results.forEach(result => {
+        if (result.pass) {
+          passCount++;
+          html += `<div class="test-result pass">✓ ${result.message}</div>`;
+        } else {
+          failCount++;
+          html += `<div class="test-result fail">✗ ${result.message}</div>`;
+        }
+      });
+      
+      html += `<div class="test-result info"><strong>Summary:</strong> ${passCount} passed, ${failCount} failed</div>`;
+      
+      if (failCount === 0) {
+        html += '<div class="test-result pass"><strong>All tests passed! ✓</strong></div>';
+      } else {
+        html += '<div class="test-result fail"><strong>Some tests failed. Please review the implementation.</strong></div>';
+      }
+      
+      resultsDiv.innerHTML = html;
+    }
+    
+    // Run function check on load
+    checkFunctionExists();
+  </script>
+</body>
+</html>

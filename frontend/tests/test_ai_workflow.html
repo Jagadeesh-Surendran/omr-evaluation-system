@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Workflow Test - EvalGenius</title>
+  <link rel="stylesheet" href="../style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    body {
+      padding: 20px;
+      background: var(--color-gray-50);
+    }
+    .test-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: var(--shadow-md);
+    }
+    .test-header {
+      margin-bottom: 20px;
+      padding-bottom: 20px;
+      border-bottom: 2px solid var(--color-gray-200);
+    }
+    .test-section {
+      margin: 20px 0;
+      padding: 20px;
+      background: var(--color-gray-50);
+      border-radius: 8px;
+    }
+    .test-button {
+      margin: 10px 5px;
+    }
+    #app-container {
+      margin-top: 20px;
+      min-height: 400px;
+    }
+    #toast-container {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 10000;
+    }
+    .toast {
+      padding: 12px 20px;
+      margin-bottom: 10px;
+      border-radius: 8px;
+      background: white;
+      box-shadow: var(--shadow-lg);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      opacity: 0;
+      transform: translateX(100px);
+      transition: all 0.3s ease;
+    }
+    .toast.show {
+      opacity: 1;
+      transform: translateX(0);
+    }
+    .toast-success { border-left: 4px solid var(--color-success); }
+    .toast-error { border-left: 4px solid var(--color-error); }
+    .toast-warning { border-left: 4px solid var(--color-warning); }
+    .toast-info { border-left: 4px solid var(--color-info); }
+  </style>
+</head>
+<body>
+  <div class="test-container">
+    <div class="test-header">
+      <h1>AI Workflow Test</h1>
+      <p>Test the AI evaluation workflow implementation (Tasks 4.1-4.12 and 5.1-5.4)</p>
+    </div>
+    
+    <div class="test-section">
+      <h3>Test Controls</h3>
+      <button class="btn-primary test-button" onclick="testPhase1()">Test Phase 1 (Question Paper Upload)</button>
+      <button class="btn-primary test-button" onclick="testPhase2()">Test Phase 2 (OMR Upload)</button>
+      <button class="btn-outline test-button" onclick="testAnswerKeyModal()">Test Answer Key Modal</button>
+      <button class="btn-outline test-button" onclick="testProgressModal()">Test Progress Modal</button>
+      <button class="btn-ghost test-button" onclick="resetTest()">Reset</button>
+    </div>
+    
+    <div id="app-container"></div>
+  </div>
+  
+  <div id="toast-container"></div>
+  
+  <!-- Load scripts -->
+  <script src="../js/constants.js"></script>
+  <script src="../js/state.js"></script>
+  <script src="../js/api.js"></script>
+  <script src="../js/components/mode-selection.js"></script>
+  <script src="../js/components/manual-workflow.js"></script>
+  <script src="../js/components/ai-workflow.js"></script>
+  <script src="../js/components/progress-modal.js"></script>
+  <script src="../js/components/results-view.js"></script>
+  <script src="../js/components/export.js"></script>
+  <script src="../app.js"></script>
+  
+  <script>
+    // Test functions
+    function testPhase1() {
+      console.log('Testing AI Workflow Phase 1');
+      appState.currentMode = 'ai';
+      appState.currentScreen = SCREENS.AI_WORKFLOW_PHASE1;
+      const container = document.getElementById('app-container');
+      container.innerHTML = renderAIWorkflowPhase1();
+      showToast('Phase 1 UI loaded. Try uploading a question paper.', TOAST_TYPES.INFO);
+    }
+    
+    function testPhase2() {
+      console.log('Testing AI Workflow Phase 2');
+      
+      // Set up mock answer keys
+      appState.currentMode = 'ai';
+      appState.answerKeys.ai = {
+        A: { '1': 'A', '2': 'B', '3': 'C', '4': 'D', '5': 'E' },
+        B: { '1': 'B', '2': 'C', '3': 'D', '4': 'E', '5': 'A' },
+        C: { '1': 'C', '2': 'D', '3': 'E', '4': 'A', '5': 'B' },
+        D: { '1': 'D', '2': 'E', '3': 'A', '4': 'B', '5': 'C' }
+      };
+      
+      appState.currentScreen = SCREENS.AI_WORKFLOW_PHASE2;
+      const container = document.getElementById('app-container');
+      container.innerHTML = renderAIWorkflowPhase2();
+      showToast('Phase 2 UI loaded with mock answer keys. Try uploading OMR sheets.', TOAST_TYPES.INFO);
+    }
+    
+    function testAnswerKeyModal() {
+      console.log('Testing Answer Key Review Modal');
+      
+      // Mock extracted keys
+      const mockKeys = {
+        A: { '1': 'A', '2': 'B', '3': 'C', '4': 'D', '5': 'E', '6': 'A', '7': 'B', '8': 'C', '9': 'D', '10': 'E' },
+        B: { '1': 'B', '2': 'C', '3': 'D', '4': 'E', '5': 'A', '6': 'B', '7': 'C', '8': 'D', '9': 'E', '10': 'A' },
+        C: { '1': 'C', '2': 'D', '3': 'E', '4': 'A', '5': 'B', '6': 'C', '7': 'D', '8': 'E', '9': 'A', '10': 'B' },
+        D: { '1': 'D', '2': 'E', '3': 'A', '4': 'B', '5': 'C', '6': 'D', '7': 'E', '8': 'A', '9': 'B', '10': 'C' }
+      };
+      
+      // Update state
+      appState.currentMode = 'ai';
+      Object.keys(mockKeys).forEach(set => {
+        updateAIAnswerKey(set, mockKeys[set]);
+      });
+      
+      showAnswerKeyReviewModal(mockKeys, ['A', 'B', 'C', 'D']);
+      showToast('Answer key modal opened. Try editing answers and switching tabs.', TOAST_TYPES.INFO);
+    }
+    
+    function testProgressModal() {
+      console.log('Testing Progress Modal');
+      
+      showProgressModal();
+      
+      // Simulate progress
+      updateProgress({
+        isActive: true,
+        current: 0,
+        total: 50,
+        startTime: Date.now(),
+        status: 'Starting evaluation...',
+        setDetection: {}
+      });
+      updateProgressUI();
+      
+      let current = 0;
+      const interval = setInterval(() => {
+        current++;
+        
+        // Simulate set detection
+        const sets = ['A', 'B', 'C', 'D'];
+        const randomSet = sets[Math.floor(Math.random() * sets.length)];
+        const setDetection = appState.progress.setDetection;
+        setDetection[randomSet] = (setDetection[randomSet] || 0) + 1;
+        
+        updateProgress({
+          current: current,
+          status: `Processing sheet ${current}...`,
+          setDetection: setDetection
+        });
+        updateProgressUI();
+        
+        if (current >= 50) {
+          clearInterval(interval);
+          updateProgress({
+            status: 'Evaluation complete!'
+          });
+          updateProgressUI();
+          
+          setTimeout(() => {
+            hideProgressModal();
+            showToast('Progress modal test complete!', TOAST_TYPES.SUCCESS);
+          }, 1000);
+        }
+      }, 100);
+      
+      showToast('Progress modal opened with simulated progress.', TOAST_TYPES.INFO);
+    }
+    
+    function resetTest() {
+      console.log('Resetting test');
+      resetAppState();
+      const container = document.getElementById('app-container');
+      container.innerHTML = '<p style="text-align: center; color: var(--color-gray-500); padding: 40px;">Select a test to run</p>';
+      showToast('Test reset', TOAST_TYPES.INFO);
+    }
+    
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+      console.log('AI Workflow Test Page Loaded');
+      resetTest();
+    });
+  </script>
+</body>
+</html>

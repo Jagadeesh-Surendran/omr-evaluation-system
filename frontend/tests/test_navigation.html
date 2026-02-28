@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Navigation Tests - EvalGenius AI</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/mocha/10.2.0/mocha.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        #mocha {
+            margin-top: 20px;
+        }
+        .test-header {
+            background: #3b82f6;
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .test-header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+        .test-header p {
+            margin: 5px 0 0 0;
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-header">
+        <h1>Navigation and Routing System Tests</h1>
+        <p>Unit tests for navigation functions and browser history management</p>
+    </div>
+    
+    <div id="mocha"></div>
+    
+    <!-- Hidden elements for testing -->
+    <div id="app-container" style="display: none;"></div>
+    <div id="toast-container" style="display: none;"></div>
+    
+    <!-- Test Framework -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mocha/10.2.0/mocha.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chai/4.3.10/chai.min.js"></script>
+    
+    <!-- Application Scripts -->
+    <script src="../js/constants.js"></script>
+    <script src="../js/state.js"></script>
+    <script src="../app.js"></script>
+    
+    <!-- Test Setup -->
+    <script>
+        mocha.setup('bdd');
+        const expect = chai.expect;
+        
+        // Mock jest functions for compatibility
+        const jest = {
+            fn: (impl) => {
+                const mockFn = function(...args) {
+                    mockFn.calls.push(args);
+                    return impl ? impl(...args) : undefined;
+                };
+                mockFn.calls = [];
+                mockFn.mockReturnValue = (value) => {
+                    mockFn.returnValue = value;
+                    return mockFn;
+                };
+                return mockFn;
+            }
+        };
+        
+        // Helper to check if function was called
+        function toHaveBeenCalled(mockFn) {
+            return mockFn.calls.length > 0;
+        }
+    </script>
+    
+    <!-- Test File -->
+    <script src="test_navigation.js"></script>
+    
+    <!-- Run Tests -->
+    <script>
+        mocha.run();
+    </script>
+</body>
+</html>

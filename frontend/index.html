@@ -4,241 +4,48 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EvalGenius AI - OMR Evaluation System</title>
-    
-    <!-- Font Awesome -->
+    <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- Custom CSS -->
-    <link rel="stylesheet" href="style_new.css">
 </head>
 <body>
-    <!-- Welcome Section -->
-    <div id="welcome-section" class="section active">
-        <div class="container">
-            <div class="welcome-content">
-                <div class="logo">
-                    <i class="fas fa-brain"></i>
-                </div>
-                <h1>EvalGenius <span class="highlight">AI</span></h1>
-                <p class="subtitle">Next-Generation Optical Mark Recognition System</p>
-                <p class="description">Fast, Accurate, and Intelligent OMR Evaluation</p>
-                <button class="btn btn-primary btn-large btn-get-started">
-                    Get Started <i class="fas fa-arrow-right"></i>
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Auth Section -->
-    <div id="auth-section" class="section hidden">
-        <div class="container">
-            <div class="auth-card">
-                <h2>Welcome Back</h2>
-                <p class="subtitle">Please authenticate to continue</p>
-                
-                <div class="auth-options">
-                    <button class="btn btn-outline btn-full">
-                        <i class="fas fa-envelope"></i> Login with Email
-                    </button>
-                    <button class="btn btn-outline btn-full">
-                        <img src="https://cdn-icons-png.flaticon.com/512/2991/2991148.png" width="20" alt="Google">
-                        Continue with Google
-                    </button>
-                </div>
-                
-                <div class="divider">
-                    <span>or for testing</span>
-                </div>
-                
-                <button id="guest-btn" class="btn btn-primary btn-full">
-                    <i class="fas fa-user"></i> Continue as Guest
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Main Application Section -->
-    <div id="main-section" class="section hidden">
-        <nav class="navbar">
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="nav-container">
             <div class="nav-brand">
                 <i class="fas fa-brain"></i>
                 <span>EvalGenius AI</span>
             </div>
-            <div class="nav-menu">
-                <a href="#" class="nav-link active">
-                    <i class="fas fa-home"></i> Dashboard
-                </a>
-                <a href="#" class="nav-link">
-                    <i class="fas fa-history"></i> History
-                </a>
-                <a href="#" class="nav-link">
-                    <i class="fas fa-cog"></i> Settings
-                </a>
-            </div>
-        </nav>
-
-        <div class="container">
-            <div class="main-content">
-                <!-- Upload Section -->
-                <div class="card">
-                    <div class="card-header">
-                        <h3><i class="fas fa-upload"></i> Upload Files</h3>
-                    </div>
-                    <div class="card-body">
-                        <div class="upload-section">
-                            <div class="upload-box">
-                                <h4>1. Upload OMR Sheets</h4>
-                                <label for="omr-files" class="file-label">
-                                    <i class="fas fa-file-image"></i>
-                                    <span>Click to select OMR sheet images</span>
-                                    <input type="file" id="omr-files" multiple accept="image/*,.pdf" hidden>
-                                </label>
-                                <div id="omr-file-list" class="file-list"></div>
-                            </div>
-
-                            <div class="upload-box">
-                                <h4>2. Upload Answer Key</h4>
-                                <label for="answer-key-file" class="file-label">
-                                    <i class="fas fa-file-csv"></i>
-                                    <span>Click to select answer key (CSV)</span>
-                                    <input type="file" id="answer-key-file" accept=".csv" hidden>
-                                </label>
-                                <div id="answer-key-filename" class="filename"></div>
-                            </div>
-                        </div>
-
-                        <button id="evaluate-btn" class="btn btn-primary btn-large btn-full">
-                            <i class="fas fa-play"></i> Start Evaluation
-                        </button>
-                    </div>
-                </div>
-
-                <!-- AI Answer Key Extraction -->
-                <div class="card">
-                    <div class="card-header">
-                        <h3><i class="fas fa-magic"></i> AI Answer Key Extraction</h3>
-                    </div>
-                    <div class="card-body">
-                        <p class="info-text">
-                            <i class="fas fa-info-circle"></i>
-                            Upload a question paper image and let AI extract the answer key automatically
-                        </p>
-                        <label for="question-paper-file" class="file-label">
-                            <i class="fas fa-file-image"></i>
-                            <span>Click to select question paper image</span>
-                            <input type="file" id="question-paper-file" accept="image/*,.pdf" hidden>
-                        </label>
-                        <button id="extract-btn" class="btn btn-secondary btn-full">
-                            <i class="fas fa-magic"></i> Extract Answer Key
-                        </button>
-                        <div id="extracted-key-container" class="hidden"></div>
-                    </div>
-                </div>
+            <div class="nav-actions">
+                <button class="btn-icon" id="help-btn" title="Help">
+                    <i class="fas fa-question-circle"></i>
+                </button>
             </div>
         </div>
-    </div>
+    </nav>
 
-    <!-- Progress Section -->
-    <div id="progress-section" class="section hidden">
-        <div class="container">
-            <div class="progress-card">
-                <h3><i class="fas fa-spinner fa-spin"></i> Processing...</h3>
-                <div class="progress-bar-container">
-                    <div id="progress-bar" class="progress-bar"></div>
-                </div>
-                <p id="progress-text" class="progress-text">0 / 0 sheets processed</p>
-                <p id="progress-message" class="progress-message">Starting evaluation...</p>
-            </div>
-        </div>
-    </div>
+    <!-- Main Content Area -->
+    <main id="app-container">
+        <!-- Content will be dynamically rendered here -->
+    </main>
 
-    <!-- Results Section -->
-    <div id="results-section" class="section hidden">
-        <div class="container">
-            <div class="results-header">
-                <h2><i class="fas fa-chart-bar"></i> Evaluation Results</h2>
-                <div class="results-actions">
-                    <button class="btn btn-outline" onclick="exportResults('csv')">
-                        <i class="fas fa-file-csv"></i> Export CSV
-                    </button>
-                    <button class="btn btn-outline" onclick="exportResults('excel')">
-                        <i class="fas fa-file-excel"></i> Export Excel
-                    </button>
-                    <button class="btn btn-primary" onclick="showSection('main-section')">
-                        <i class="fas fa-plus"></i> New Evaluation
-                    </button>
-                </div>
-            </div>
+    <!-- Toast Notification Container -->
+    <div id="toast-container"></div>
 
-            <!-- Statistics Cards -->
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-icon">
-                        <i class="fas fa-users"></i>
-                    </div>
-                    <div class="stat-content">
-                        <h4>Total Students</h4>
-                        <p id="total-students" class="stat-value">0</p>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon">
-                        <i class="fas fa-chart-line"></i>
-                    </div>
-                    <div class="stat-content">
-                        <h4>Average Score</h4>
-                        <p id="average-score" class="stat-value">0%</p>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon">
-                        <i class="fas fa-trophy"></i>
-                    </div>
-                    <div class="stat-content">
-                        <h4>Highest Score</h4>
-                        <p id="highest-score" class="stat-value">0%</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Insights -->
-            <div class="card">
-                <div class="card-header">
-                    <h3><i class="fas fa-lightbulb"></i> AI Insights</h3>
-                </div>
-                <div class="card-body">
-                    <div id="insights-container"></div>
-                </div>
-            </div>
-
-            <!-- Results Table -->
-            <div class="card">
-                <div class="card-header">
-                    <h3><i class="fas fa-table"></i> Student Results</h3>
-                </div>
-                <div class="card-body">
-                    <div class="table-container">
-                        <table class="results-table">
-                            <thead>
-                                <tr>
-                                    <th>#</th>
-                                    <th>Student ID</th>
-                                    <th>Name</th>
-                                    <th>Score</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="results-table-body">
-                                <!-- Results will be inserted here -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Load JavaScript -->
+    <!-- Scripts -->
+    <script src="js/constants.js"></script>
+    <script src="js/state.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/utils/validation.js"></script>
+    <script src="js/utils/file-handler.js"></script>
+    <script src="js/utils/csv-parser.js"></script>
+    <script src="js/utils/helpers.js"></script>
+    <script src="js/utils/ui-components.js"></script>
+    <script src="js/components/mode-selection.js"></script>
+    <script src="js/components/manual-workflow.js"></script>
+    <script src="js/components/ai-workflow.js"></script>
+    <script src="js/components/progress-modal.js"></script>
+    <script src="js/components/results-view.js"></script>
+    <script src="js/components/export.js"></script>
     <script src="app.js"></script>
 </body>
 </html>

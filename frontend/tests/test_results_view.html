@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Results View Test - EvalGenius AI</title>
+    <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            padding: 20px;
+            background: var(--color-gray-100);
+        }
+        .test-controls {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-controls h2 {
+            margin-top: 0;
+        }
+        .test-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .test-info {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            border-left: 4px solid #2196f3;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-controls">
+        <h2>Results View Test</h2>
+        <p>Test the results view component with sample data</p>
+        
+        <div class="test-buttons">
+            <button class="btn-primary" onclick="testManualMode()">
+                <i class="fas fa-file-upload"></i> Test Manual Mode
+            </button>
+            <button class="btn-primary" onclick="testAIMode()">
+                <i class="fas fa-brain"></i> Test AI Mode
+            </button>
+            <button class="btn-outline" onclick="testEmptyResults()">
+                <i class="fas fa-inbox"></i> Test Empty Results
+            </button>
+            <button class="btn-outline" onclick="testLargeDataset()">
+                <i class="fas fa-database"></i> Test Large Dataset
+            </button>
+        </div>
+        
+        <div class="test-info">
+            <strong>Test Features:</strong>
+            <ul style="margin: 10px 0 0 20px;">
+                <li>Statistics cards with calculated metrics</li>
+                <li>Set distribution chart (AI mode only)</li>
+                <li>AI-generated insights</li>
+                <li>Search functionality</li>
+                <li>Set filtering (AI mode)</li>
+                <li>Column sorting</li>
+                <li>Student details modal</li>
+                <li>CSV and Excel export</li>
+                <li>Unknown set highlighting</li>
+            </ul>
+        </div>
+    </div>
+
+    <div id="toast-container"></div>
+    <div id="app-container"></div>
+
+    <!-- Scripts -->
+    <script src="../js/constants.js"></script>
+    <script src="../js/state.js"></script>
+    <script src="../js/api.js"></script>
+    <script src="../js/utils/validation.js"></script>
+    <script src="../js/utils/file-handler.js"></script>
+    <script src="../js/utils/helpers.js"></script>
+    <script src="../js/utils/ui-components.js"></script>
+    <script src="../js/components/results-view.js"></script>
+    <script src="../js/components/export.js"></script>
+
+    <script>
+        // Generate sample student data
+        function generateStudents(count, mode = 'manual') {
+            const students = [];
+            const sets = ['A', 'B', 'C', 'D', 'UNKNOWN'];
+            const names = ['Alice Johnson', 'Bob Smith', 'Carol Williams', 'David Brown', 'Emma Davis', 
+                          'Frank Miller', 'Grace Wilson', 'Henry Moore', 'Ivy Taylor', 'Jack Anderson'];
+            
+            for (let i = 0; i < count; i++) {
+                const score = Math.floor(Math.random() * 50) + 40; // 40-90
+                const student = {
+                    student_id: String(i + 1).padStart(3, '0'),
+                    name: names[i % names.length] + ' ' + (Math.floor(i / names.length) + 1),
+                    score: score,
+                    filename: `sheet_${String(i + 1).padStart(3, '0')}.jpg`,
+                    correct_count: Math.floor(score / 5),
+                    incorrect_count: 20 - Math.floor(score / 5),
+                    unanswered_count: 0
+                };
+                
+                if (mode === 'ai') {
+                    // Distribute across sets with some UNKNOWN
+                    student.form_type = i % 10 === 0 ? 'UNKNOWN' : sets[i % 4];
+                }
+                
+                students.push(student);
+            }
+            
+            return students;
+        }
+
+        // Test Manual Mode
+        function testManualMode() {
+            appState.currentMode = EVALUATION_MODES.MANUAL;
+            appState.results = {
+                students: generateStudents(25, 'manual'),
+                statistics: {
+                    processingTime: 2.3
+                },
+                insights: [
+                    'Average score is above 70%',
+                    '92% of students passed the exam'
+                ]
+            };
+            
+            renderResults();
+            showToast('Manual mode results loaded', TOAST_TYPES.SUCCESS);
+        }
+
+        // Test AI Mode
+        function testAIMode() {
+            appState.currentMode = EVALUATION_MODES.AI;
+            appState.results = {
+                students: generateStudents(40, 'ai'),
+                statistics: {
+                    processingTime: 3.8
+                },
+                insights: [
+                    'Set A had the highest average score (78%)',
+                    '4 sheets have unknown set detection'
+                ]
+            };
+            
+            renderResults();
+            showToast('AI mode results loaded', TOAST_TYPES.SUCCESS);
+        }
+
+        // Test Empty Results
+        function testEmptyResults() {
+            appState.currentMode = EVALUATION_MODES.MANUAL;
+            appState.results = {
+                students: [],
+                statistics: {},
+                insights: []
+            };
+            
+            renderResults();
+            showToast('Empty results loaded', TOAST_TYPES.INFO);
+        }
+
+        // Test Large Dataset
+        function testLargeDataset() {
+            appState.currentMode = EVALUATION_MODES.AI;
+            appState.results = {
+                students: generateStudents(150, 'ai'),
+                statistics: {
+                    processingTime: 12.5
+                },
+                insights: [
+                    'Excellent performance! Average score is 75.2%',
+                    'All sets performed similarly',
+                    '15 sheets have unknown set detection'
+                ]
+            };
+            
+            renderResults();
+            showToast('Large dataset loaded (150 students)', TOAST_TYPES.SUCCESS);
+        }
+
+        // Render results
+        function renderResults() {
+            const container = document.getElementById('app-container');
+            container.innerHTML = renderResultsView();
+        }
+
+        // Initialize with manual mode test
+        window.addEventListener('DOMContentLoaded', () => {
+            testManualMode();
+        });
+    </script>
+</body>
+</html>

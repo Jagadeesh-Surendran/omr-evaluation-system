@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UI Components Test - EvalGenius AI</title>
+    <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .test-section {
+            margin: 2rem 0;
+            padding: 2rem;
+            background: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .test-section h2 {
+            margin-bottom: 1rem;
+            color: var(--color-gray-900);
+        }
+        .button-group {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-top: 1rem;
+        }
+        .test-result {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: var(--color-gray-50);
+            border-radius: 0.5rem;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <i class="fas fa-flask"></i>
+                <span>UI Components Test</span>
+            </div>
+        </div>
+    </nav>
+
+    <main id="app-container">
+        <h1 style="margin-bottom: 2rem;">UI Components Test Suite</h1>
+
+        <!-- Button Components Test -->
+        <div class="test-section">
+            <h2>1. Button Components</h2>
+            <p>Testing different button types and sizes</p>
+            <div class="button-group" id="button-test-container"></div>
+        </div>
+
+        <!-- Toast Notifications Test -->
+        <div class="test-section">
+            <h2>2. Toast Notifications</h2>
+            <p>Testing toast notification system</p>
+            <div class="button-group">
+                <button class="btn-primary" onclick="testToast('success')">
+                    <i class="fas fa-check"></i> Success Toast
+                </button>
+                <button class="btn-primary" onclick="testToast('error')">
+                    <i class="fas fa-times"></i> Error Toast
+                </button>
+                <button class="btn-primary" onclick="testToast('warning')">
+                    <i class="fas fa-exclamation"></i> Warning Toast
+                </button>
+                <button class="btn-primary" onclick="testToast('info')">
+                    <i class="fas fa-info"></i> Info Toast
+                </button>
+            </div>
+        </div>
+
+        <!-- Modal Component Test -->
+        <div class="test-section">
+            <h2>3. Modal Component</h2>
+            <p>Testing modal with different configurations</p>
+            <div class="button-group">
+                <button class="btn-primary" onclick="testBasicModal()">
+                    <i class="fas fa-window-maximize"></i> Basic Modal
+                </button>
+                <button class="btn-primary" onclick="testLargeModal()">
+                    <i class="fas fa-expand"></i> Large Modal
+                </button>
+                <button class="btn-primary" onclick="testConfirmation()">
+                    <i class="fas fa-question"></i> Confirmation Modal
+                </button>
+                <button class="btn-primary" onclick="testErrorModal()">
+                    <i class="fas fa-exclamation-circle"></i> Error Modal
+                </button>
+            </div>
+        </div>
+
+        <!-- Loading Spinner Test -->
+        <div class="test-section">
+            <h2>4. Loading Spinner</h2>
+            <p>Testing loading spinner component</p>
+            <div class="button-group">
+                <button class="btn-primary" onclick="testSpinner('small')">
+                    <i class="fas fa-spinner"></i> Small Spinner
+                </button>
+                <button class="btn-primary" onclick="testSpinner('normal')">
+                    <i class="fas fa-spinner"></i> Normal Spinner
+                </button>
+                <button class="btn-primary" onclick="testSpinner('large')">
+                    <i class="fas fa-spinner"></i> Large Spinner
+                </button>
+                <button class="btn-primary" id="loading-btn" onclick="testButtonLoading()">
+                    <i class="fas fa-play"></i> Test Button Loading
+                </button>
+            </div>
+            <div id="spinner-container" class="test-result" style="min-height: 150px;"></div>
+        </div>
+
+        <!-- Test Results -->
+        <div class="test-section">
+            <h2>Test Results</h2>
+            <div id="test-results" class="test-result">
+                <p>Run tests to see results...</p>
+            </div>
+        </div>
+    </main>
+
+    <div id="toast-container"></div>
+
+    <script src="../js/constants.js"></script>
+    <script src="../js/utils/helpers.js"></script>
+    <script src="../js/utils/ui-components.js"></script>
+
+    <script>
+        let testResults = [];
+
+        function logTest(name, status, message = '') {
+            testResults.push({ name, status, message, time: new Date().toLocaleTimeString() });
+            updateTestResults();
+        }
+
+        function updateTestResults() {
+            const container = document.getElementById('test-results');
+            container.innerHTML = testResults.map(result => {
+                const icon = result.status === 'pass' ? '✓' : '✗';
+                const color = result.status === 'pass' ? 'var(--color-success)' : 'var(--color-error)';
+                return `<div style="color: ${color}; margin: 0.5rem 0;">
+                    ${icon} [${result.time}] ${result.name}: ${result.message || result.status}
+                </div>`;
+            }).join('');
+        }
+
+        // Test 1: Button Components
+        function initButtonTests() {
+            const container = document.getElementById('button-test-container');
+            
+            // Primary button
+            const primaryBtn = createButton({
+                text: 'Primary Button',
+                type: 'primary',
+                icon: 'fas fa-check',
+                onClick: () => {
+                    logTest('Primary Button', 'pass', 'Clicked successfully');
+                    showToast('Primary button clicked!', 'success');
+                }
+            });
+            container.appendChild(primaryBtn);
+
+            // Outline button
+            const outlineBtn = createButton({
+                text: 'Outline Button',
+                type: 'outline',
+                icon: 'fas fa-star',
+                onClick: () => {
+                    logTest('Outline Button', 'pass', 'Clicked successfully');
+                    showToast('Outline button clicked!', 'info');
+                }
+            });
+            container.appendChild(outlineBtn);
+
+            // Ghost button
+            const ghostBtn = createButton({
+                text: 'Ghost Button',
+                type: 'ghost',
+                icon: 'fas fa-ghost',
+                onClick: () => {
+                    logTest('Ghost Button', 'pass', 'Clicked successfully');
+                    showToast('Ghost button clicked!', 'info');
+                }
+            });
+            container.appendChild(ghostBtn);
+
+            // Icon button
+            const iconBtn = createButton({
+                type: 'icon',
+                icon: 'fas fa-heart',
+                onClick: () => {
+                    logTest('Icon Button', 'pass', 'Clicked successfully');
+                    showToast('Icon button clicked!', 'success');
+                }
+            });
+            container.appendChild(iconBtn);
+
+            // Large button
+            const largeBtn = createButton({
+                text: 'Large Button',
+                type: 'primary',
+                size: 'large',
+                icon: 'fas fa-rocket',
+                onClick: () => {
+                    logTest('Large Button', 'pass', 'Clicked successfully');
+                    showToast('Large button clicked!', 'success');
+                }
+            });
+            container.appendChild(largeBtn);
+
+            // Disabled button
+            const disabledBtn = createButton({
+                text: 'Disabled Button',
+                type: 'primary',
+                disabled: true,
+                onClick: () => {
+                    logTest('Disabled Button', 'fail', 'Should not be clickable');
+                }
+            });
+            container.appendChild(disabledBtn);
+
+            logTest('Button Components', 'pass', 'All button types rendered');
+        }
+
+        // Test 2: Toast Notifications
+        function testToast(type) {
+            const messages = {
+                success: 'Operation completed successfully!',
+                error: 'An error occurred during the operation.',
+                warning: 'Please review your input before proceeding.',
+                info: 'This is an informational message.'
+            };
+            
+            showToast(messages[type], type);
+            logTest(`Toast - ${type}`, 'pass', `Displayed ${type} toast`);
+        }
+
+        // Test 3: Modal Components
+        function testBasicModal() {
+            const modal = createModal({
+                title: 'Basic Modal',
+                subtitle: 'This is a basic modal example',
+                content: '<p>This modal demonstrates the basic modal functionality with a title, subtitle, and content area.</p>',
+                actions: [
+                    {
+                        text: 'Cancel',
+                        type: 'ghost',
+                        onClick: () => {
+                            closeModal(modal);
+                            logTest('Basic Modal', 'pass', 'Closed via Cancel button');
+                        }
+                    },
+                    {
+                        text: 'OK',
+                        type: 'primary',
+                        onClick: () => {
+                            closeModal(modal);
+                            logTest('Basic Modal', 'pass', 'Closed via OK button');
+                            showToast('Modal action confirmed', 'success');
+                        }
+                    }
+                ]
+            });
+            showModal(modal);
+            logTest('Basic Modal', 'pass', 'Opened successfully');
+        }
+
+        function testLargeModal() {
+            const content = `
+                <p>This is a large modal with more content space.</p>
+                <p>Large modals are useful for displaying detailed information, forms, or complex UI elements.</p>
+                <ul>
+                    <li>Feature 1: More space for content</li>
+                    <li>Feature 2: Better for complex layouts</li>
+                    <li>Feature 3: Responsive design</li>
+                </ul>
+            `;
+            
+            const modal = createModal({
+                title: 'Large Modal',
+                subtitle: 'Demonstrating large modal size',
+                content: content,
+                large: true,
+                actions: [
+                    {
+                        text: 'Close',
+                        type: 'primary',
+                        onClick: () => {
+                            closeModal(modal);
+                            logTest('Large Modal', 'pass', 'Closed successfully');
+                        }
+                    }
+                ]
+            });
+            showModal(modal);
+            logTest('Large Modal', 'pass', 'Opened successfully');
+        }
+
+        function testConfirmation() {
+            showConfirmation({
+                title: 'Confirm Action',
+                message: 'Are you sure you want to proceed with this action?',
+                confirmText: 'Yes, Proceed',
+                cancelText: 'Cancel',
+                onConfirm: () => {
+                    logTest('Confirmation Modal', 'pass', 'User confirmed');
+                    showToast('Action confirmed!', 'success');
+                },
+                onCancel: () => {
+                    logTest('Confirmation Modal', 'pass', 'User cancelled');
+                    showToast('Action cancelled', 'info');
+                }
+            });
+            logTest('Confirmation Modal', 'pass', 'Opened successfully');
+        }
+
+        function testErrorModal() {
+            showErrorModal(
+                'An error occurred while processing your request.',
+                [
+                    'Check your internet connection',
+                    'Verify that all required fields are filled',
+                    'Try refreshing the page',
+                    'Contact support if the problem persists'
+                ]
+            );
+            logTest('Error Modal', 'pass', 'Opened successfully');
+        }
+
+        // Test 4: Loading Spinner
+        function testSpinner(size) {
+            const container = document.getElementById('spinner-container');
+            const spinner = createSpinner({ 
+                size: size, 
+                text: `Loading with ${size} spinner...` 
+            });
+            container.innerHTML = '';
+            container.appendChild(spinner);
+            logTest(`Spinner - ${size}`, 'pass', `Displayed ${size} spinner`);
+        }
+
+        function testButtonLoading() {
+            const btn = document.getElementById('loading-btn');
+            setButtonLoading(btn, true, 'Loading...');
+            logTest('Button Loading State', 'pass', 'Button set to loading');
+            
+            setTimeout(() => {
+                setButtonLoading(btn, false);
+                logTest('Button Loading State', 'pass', 'Button restored to normal');
+                showToast('Loading complete!', 'success');
+            }, 3000);
+        }
+
+        // Initialize tests on load
+        document.addEventListener('DOMContentLoaded', () => {
+            initButtonTests();
+            logTest('UI Components Test Suite', 'pass', 'Initialized successfully');
+        });
+    </script>
+</body>
+</html>

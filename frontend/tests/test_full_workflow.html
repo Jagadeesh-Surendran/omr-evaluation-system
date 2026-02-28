@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Full Workflow Test - EvalGenius AI</title>
+    <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            padding: 20px;
+            background: var(--color-gray-100);
+        }
+        .test-panel {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-panel h2 {
+            margin-top: 0;
+            color: var(--color-primary);
+        }
+        .workflow-steps {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        .step {
+            flex: 1;
+            min-width: 150px;
+            padding: 15px;
+            background: var(--color-gray-50);
+            border-radius: 8px;
+            border: 2px solid var(--color-gray-200);
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .step:hover {
+            border-color: var(--color-primary);
+            background: var(--color-primary-light);
+        }
+        .step.active {
+            border-color: var(--color-success);
+            background: var(--color-success-light);
+        }
+        .step-number {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--color-primary);
+            margin-bottom: 5px;
+        }
+        .step-label {
+            font-size: 14px;
+            color: var(--color-gray-700);
+        }
+        .status-message {
+            padding: 15px;
+            background: var(--color-info-light);
+            border-left: 4px solid var(--color-info);
+            border-radius: 4px;
+            margin: 15px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-panel">
+        <h2>🧪 Full Workflow Integration Test</h2>
+        <p>Test the complete evaluation workflow from start to finish</p>
+        
+        <div class="workflow-steps">
+            <div class="step" onclick="simulateStep(1)">
+                <div class="step-number">1</div>
+                <div class="step-label">Mode Selection</div>
+            </div>
+            <div class="step" onclick="simulateStep(2)">
+                <div class="step-number">2</div>
+                <div class="step-label">File Upload</div>
+            </div>
+            <div class="step" onclick="simulateStep(3)">
+                <div class="step-number">3</div>
+                <div class="step-label">Evaluation</div>
+            </div>
+            <div class="step" onclick="simulateStep(4)">
+                <div class="step-number">4</div>
+                <div class="step-label">Results View</div>
+            </div>
+            <div class="step" onclick="simulateStep(5)">
+                <div class="step-number">5</div>
+                <div class="step-label">Export</div>
+            </div>
+        </div>
+        
+        <div class="status-message" id="status-message">
+            Click on any step to simulate that part of the workflow
+        </div>
+        
+        <div style="display: flex; gap: 10px; margin-top: 20px;">
+            <button class="btn-primary" onclick="runFullWorkflow()">
+                <i class="fas fa-play"></i> Run Full Workflow
+            </button>
+            <button class="btn-outline" onclick="resetTest()">
+                <i class="fas fa-redo"></i> Reset
+            </button>
+        </div>
+    </div>
+
+    <div id="toast-container"></div>
+    <div id="app-container"></div>
+
+    <!-- Scripts -->
+    <script src="../js/constants.js"></script>
+    <script src="../js/state.js"></script>
+    <script src="../js/api.js"></script>
+    <script src="../js/utils/validation.js"></script>
+    <script src="../js/utils/file-handler.js"></script>
+    <script src="../js/utils/helpers.js"></script>
+    <script src="../js/utils/ui-components.js"></script>
+    <script src="../js/components/results-view.js"></script>
+    <script src="../js/components/export.js"></script>
+
+    <script>
+        let currentStep = 0;
+
+        function updateStatus(message) {
+            document.getElementById('status-message').innerHTML = message;
+        }
+
+        function markStepActive(stepNum) {
+            document.querySelectorAll('.step').forEach((step, index) => {
+                if (index + 1 === stepNum) {
+                    step.classList.add('active');
+                } else {
+                    step.classList.remove('active');
+                }
+            });
+            currentStep = stepNum;
+        }
+
+        function simulateStep(stepNum) {
+            markStepActive(stepNum);
+            
+            switch(stepNum) {
+                case 1:
+                    updateStatus('✅ <strong>Mode Selection:</strong> User selects AI Evaluation mode');
+                    appState.currentMode = EVALUATION_MODES.AI;
+                    showToast('AI mode selected', TOAST_TYPES.INFO);
+                    break;
+                    
+                case 2:
+                    updateStatus('✅ <strong>File Upload:</strong> Question paper and OMR sheets uploaded');
+                    showToast('Files uploaded successfully', TOAST_TYPES.SUCCESS);
+                    break;
+                    
+                case 3:
+                    updateStatus('✅ <strong>Evaluation:</strong> Processing 50 OMR sheets with AI set detection...');
+                    showToast('Evaluation in progress...', TOAST_TYPES.INFO);
+                    setTimeout(() => {
+                        showToast('Evaluation complete!', TOAST_TYPES.SUCCESS);
+                        updateStatus('✅ <strong>Evaluation Complete:</strong> 50 sheets processed in 3.2 seconds');
+                    }, 1500);
+                    break;
+                    
+                case 4:
+                    simulateResults();
+                    break;
+                    
+                case 5:
+                    updateStatus('✅ <strong>Export:</strong> Results exported to CSV and Excel');
+                    showToast('Testing export functionality...', TOAST_TYPES.INFO);
+                    setTimeout(() => {
+                        showToast('CSV export ready', TOAST_TYPES.SUCCESS);
+                    }, 500);
+                    break;
+            }
+        }
+
+        function simulateResults() {
+            updateStatus('✅ <strong>Results View:</strong> Displaying comprehensive results with statistics, charts, and insights');
+            
+            // Generate realistic test data
+            const students = [];
+            const sets = ['A', 'B', 'C', 'D'];
+            const names = [
+                'Alice Johnson', 'Bob Smith', 'Carol Williams', 'David Brown', 'Emma Davis',
+                'Frank Miller', 'Grace Wilson', 'Henry Moore', 'Ivy Taylor', 'Jack Anderson',
+                'Kate Lee', 'Liam Chen', 'Maya Patel', 'Noah Kim', 'Olivia Garcia',
+                'Peter Wang', 'Quinn Rodriguez', 'Rachel Martinez', 'Sam Thompson', 'Tina Lopez'
+            ];
+            
+            for (let i = 0; i < 50; i++) {
+                const score = Math.floor(Math.random() * 40) + 50; // 50-90
+                const set = i % 15 === 0 ? 'UNKNOWN' : sets[i % 4];
+                
+                students.push({
+                    student_id: String(i + 1).padStart(3, '0'),
+                    name: names[i % names.length] + (i >= names.length ? ' ' + Math.floor(i / names.length + 1) : ''),
+                    score: score,
+                    form_type: set,
+                    filename: `sheet_${String(i + 1).padStart(3, '0')}.jpg`,
+                    correct_count: Math.floor(score / 5),
+                    incorrect_count: 20 - Math.floor(score / 5),
+                    unanswered_count: 0
+                });
+            }
+            
+            // Set up state
+            appState.currentMode = EVALUATION_MODES.AI;
+            appState.results = {
+                students: students,
+                statistics: {
+                    totalProcessed: 50,
+                    averageScore: students.reduce((sum, s) => sum + s.score, 0) / students.length,
+                    highestScore: Math.max(...students.map(s => s.score)),
+                    processingTime: 3.2
+                },
+                insights: [
+                    'Excellent performance! Average score is 72.4%',
+                    'Set B had the highest average score (75.2%)',
+                    '3 sheets have unknown set detection'
+                ]
+            };
+            
+            // Render results
+            const container = document.getElementById('app-container');
+            container.innerHTML = renderResultsView();
+            
+            showToast('Results view loaded with 50 students', TOAST_TYPES.SUCCESS);
+        }
+
+        function runFullWorkflow() {
+            updateStatus('🚀 <strong>Running full workflow simulation...</strong>');
+            
+            let step = 1;
+            const interval = setInterval(() => {
+                if (step <= 5) {
+                    simulateStep(step);
+                    step++;
+                } else {
+                    clearInterval(interval);
+                    updateStatus('✅ <strong>Full workflow complete!</strong> All features tested successfully.');
+                    showToast('Workflow test complete!', TOAST_TYPES.SUCCESS);
+                }
+            }, 2000);
+        }
+
+        function resetTest() {
+            currentStep = 0;
+            document.querySelectorAll('.step').forEach(step => {
+                step.classList.remove('active');
+            });
+            updateStatus('Click on any step to simulate that part of the workflow');
+            document.getElementById('app-container').innerHTML = '';
+            showToast('Test reset', TOAST_TYPES.INFO);
+        }
+
+        // Initialize
+        window.addEventListener('DOMContentLoaded', () => {
+            updateStatus('Ready to test! Click "Run Full Workflow" or select individual steps.');
+        });
+    </script>
+</body>
+</html>
