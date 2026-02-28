@@ -1,831 +1,867 @@
-# Troubleshooting Guide
+# AI Question Solver Troubleshooting Guide
 
-This guide helps you diagnose and fix common issues with the OMR Evaluation System, particularly focusing on AI-powered answer key extraction, Ollama connection problems, and performance optimization.
+## Overview
+
+This guide helps you diagnose and resolve common issues with the AI Question Solver feature. It covers service issues, processing errors, performance problems, and provides debugging steps.
 
 ## Table of Contents
 
-- [Quick Diagnostics](#quick-diagnostics)
-- [Ollama Connection Problems](#ollama-connection-problems)
-- [Answer Key Extraction Failures](#answer-key-extraction-failures)
-- [Image Quality Issues](#image-quality-issues)
-- [Performance Optimization](#performance-optimization)
-- [OMR Sheet Processing Issues](#omr-sheet-processing-issues)
-- [File Upload Problems](#file-upload-problems)
-- [Debug Logging](#debug-logging)
-- [Common Error Messages](#common-error-messages)
+1. [Service Issues](#service-issues)
+2. [Upload and Classification Issues](#upload-and-classification-issues)
+3. [Question Extraction Issues](#question-extraction-issues)
+4. [AI Solving Issues](#ai-solving-issues)
+5. [Session Management Issues](#session-management-issues)
+6. [Performance Issues](#performance-issues)
+7. [Export Issues](#export-issues)
+8. [WebSocket Issues](#websocket-issues)
+9. [Authentication Issues](#authentication-issues)
+10. [Log File Locations](#log-file-locations)
+11. [Debugging Steps](#debugging-steps)
+12. [Performance Tuning](#performance-tuning)
 
 ---
 
-## Quick Diagnostics
+## Service Issues
 
-Before diving into specific issues, run these quick checks:
+### Issue: Ollama Service Not Available
 
-### 1. Check Ollama Status
+**Symptoms**:
+- Error message: "Ollama service is not available"
+- Cannot start solver sessions
+- Upload fails immediately
 
+**Diagnosis**:
 ```bash
 # Check if Ollama is running
+curl http://localhost:11434/api/tags
+
+# Check Ollama process
+ps aux | grep ollama
+
+# Check Ollama logs (Linux)
+sudo journalctl -u ollama -n 50
+```
+
+**Solutions**:
+
+1. **Start Ollama Service**:
+```bash
+# Linux/macOS
+ollama serve
+
+# Windows (should start automatically)
+# Check Services app for "Ollama" service
+```
+
+2. **Verify Ollama Installation**:
+```bash
+# Check version
+ollama --version
+
+# Reinstall if needed
+curl -fsSL https://ollama.com/install.sh | sh
+```
+
+3. **Check Port Availability**:
+```bash
+# Check if port 11434 is in use
+netstat -tulpn | grep 11434
+
+# If blocked, change port in config
+export OLLAMA_HOST=0.0.0.0:11435
+```
+
+4. **Check Firewall**:
+```bash
+# Allow Ollama port
+sudo ufw allow 11434/tcp
+```
+
+---
+
+### Issue: Models Not Available
+
+**Symptoms**:
+- Error: "Model not found"
+- Fallback to default model warnings
+- Slow processing with wrong model
+
+**Diagnosis**:
+```bash
+# List installed models
 ollama list
 
-# If not running, start Ollama
+# Check model storage
+ls -lh ~/.ollama/models  # macOS/Linux
+dir %USERPROFILE%\.ollama\models  # Windows
+```
+
+**Solutions**:
+
+1. **Install Required Models**:
+```bash
+# Install llama3.2 (general/math)
+ollama pull llama3.2:latest
+
+# Install moondream (visual)
+ollama pull moondream:latest
+
+# Verify installation
+ollama list
+```
+
+2. **Test Models**:
+```bash
+# Test llama3.2
+ollama run llama3.2 "What is 2+2?"
+
+# Test moondream with image
+ollama run moondream "Describe this" --image test.jpg
+```
+
+3. **Check Disk Space**:
+```bash
+# Check available space
+df -h  # Linux/macOS
+```
+
+---
+
+## Upload and Classification Issues
+
+### Issue: PDF Upload Fails
+
+**Symptoms**:
+- Upload button doesn't work
+- Error: "Invalid PDF file"
+- Upload progress stuck at 0%
+
+**Diagnosis**:
+```bash
+# Check file size
+ls -lh your-file.pdf
+
+# Check file type
+file your-file.pdf
+
+# Try opening in PDF reader
+```
+
+**Solutions**:
+
+1. **Check File Size**:
+   - Maximum: 50 MB
+   - Compress large PDFs using online tools or:
+```bash
+# Using Ghostscript
+gs -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 \
+   -dPDFSETTINGS=/ebook -dNOPAUSE -dQUIET -dBATCH \
+   -sOutputFile=compressed.pdf input.pdf
+```
+
+2. **Remove Password Protection**:
+```bash
+# Using qpdf
+qpdf --password=PASSWORD --decrypt input.pdf output.pdf
+```
+
+3. **Check PDF Validity**:
+   - Try opening in Adobe Reader or browser
+   - Re-save the PDF
+   - Convert to PDF/A format
+
+4. **Check Upload Folder Permissions**:
+```bash
+# Ensure upload directory is writable
+chmod 755 backend/uploads
+chown www-data:www-data backend/uploads  # Linux
+```
+
+---
+
+### Issue: Low Classification Confidence
+
+**Symptoms**:
+- System asks to manually select document type
+- Confidence score < 0.7
+- Incorrect document type detected
+
+**Diagnosis**:
+- Review first 3 pages of PDF
+- Check for clear question numbers and options
+- Look for answer indicators (filled bubbles, answer lists)
+
+**Solutions**:
+
+1. **Manually Select Type**:
+   - Choose "Question Bank" if PDF has questions without answers
+   - Choose "Answer Key" if PDF has answers marked
+
+2. **Improve PDF Quality**:
+   - Ensure questions are clearly numbered (1, 2, 3...)
+   - Verify options are labeled (A, B, C, D, E)
+   - Remove any answer markings from question bank
+
+3. **Check PDF Structure**:
+   - First 3 pages should be representative
+   - Avoid cover pages or instructions in first 3 pages
+
+---
+
+## Question Extraction Issues
+
+### Issue: Incomplete Question Extraction
+
+**Symptoms**:
+- Fewer questions extracted than expected
+- Some questions missing
+- Error: "Failed to extract questions"
+
+**Diagnosis**:
+```bash
+# Check extraction logs
+tail -f backend/solver_sessions/{session_id}/logs/extraction.log
+
+# Check for page conversion errors
+grep "ERROR" backend/solver_sessions/{session_id}/logs/extraction.log
+```
+
+**Solutions**:
+
+1. **Check PDF Quality**:
+   - Minimum 300 DPI for scanned PDFs
+   - Clear, readable text
+   - No handwritten questions
+
+2. **Verify Question Format**:
+   - Questions must be numbered
+   - Options must be labeled A-E
+   - Consistent formatting throughout
+
+3. **Check for Multi-Page Questions**:
+   - System should combine them automatically
+   - Verify in question list
+
+4. **Review Error Log**:
+```bash
+# View specific page errors
+grep "page" backend/solver_sessions/{session_id}/logs/extraction.log
+```
+
+---
+
+### Issue: Mathematical Notation Corrupted
+
+**Symptoms**:
+- Math symbols appear as boxes or gibberish
+- Equations not readable
+- Special characters missing
+
+**Diagnosis**:
+- Check if PDF uses embedded fonts
+- Verify Unicode support
+
+**Solutions**:
+
+1. **Use Digital PDFs**:
+   - Prefer digitally created PDFs over scanned
+   - Use LaTeX or MathType for equations
+
+2. **Check Font Embedding**:
+```bash
+# Check PDF fonts
+pdffonts your-file.pdf
+```
+
+3. **Convert to Images**:
+   - For scanned PDFs, ensure high resolution
+   - Use OCR-friendly fonts
+
+---
+
+## AI Solving Issues
+
+### Issue: Many Low Confidence Answers
+
+**Symptoms**:
+- Most answers have confidence < 0.6
+- Many questions flagged for review
+- Average confidence very low
+
+**Diagnosis**:
+```bash
+# Check solving logs
+tail -f backend/solver_sessions/{session_id}/logs/solving.log
+
+# Check model being used
+grep "model" backend/solver_sessions/{session_id}/logs/solving.log
+```
+
+**Solutions**:
+
+1. **Review Question Quality**:
+   - Are questions clearly worded?
+   - Are options distinct and unambiguous?
+   - Is required knowledge within AI's scope?
+
+2. **Check Model Selection**:
+   - Verify correct model for question type
+   - Math questions should use math-optimized model
+   - Visual questions should use vision model
+
+3. **Improve Question Clarity**:
+   - Rephrase ambiguous questions
+   - Ensure all necessary information is provided
+   - Remove trick questions or overly complex wording
+
+4. **Manual Review**:
+   - Review and correct low-confidence answers
+   - Add notes for future reference
+
+---
+
+### Issue: AI Selects Wrong Answers
+
+**Symptoms**:
+- Obviously incorrect answers selected
+- Explanation doesn't match answer
+- Consistent errors on certain topics
+
+**Diagnosis**:
+- Review AI explanations
+- Check question type detection
+- Verify answer options are correct
+
+**Solutions**:
+
+1. **Manually Correct**:
+   - Use the correction interface
+   - Document why AI was wrong
+
+2. **Check Question Type**:
+   - Verify question is categorized correctly
+   - Math questions should be detected as "math"
+
+3. **Report Patterns**:
+   - Note common failure patterns
+   - Report to system administrator
+
+4. **Verify Options**:
+   - Ensure all options are extracted correctly
+   - Check for missing or corrupted options
+
+---
+
+### Issue: Timeouts on Questions
+
+**Symptoms**:
+- Questions marked as "timeout"
+- Processing takes > 30 seconds per question
+- Session progress very slow
+
+**Diagnosis**:
+```bash
+# Check processing times
+grep "timeout" backend/solver_sessions/{session_id}/logs/solving.log
+
+# Check system resources
+htop  # or top
+```
+
+**Solutions**:
+
+1. **Check System Resources**:
+```bash
+# CPU usage
+top
+
+# Memory usage
+free -h
+
+# Disk I/O
+iotop
+```
+
+2. **Reduce Concurrent Sessions**:
+   - Limit to 1 session if resources constrained
+   - Wait for current session to complete
+
+3. **Optimize Model**:
+   - Use smaller models for simple questions
+   - Enable GPU acceleration if available
+
+4. **Increase Timeout** (if appropriate):
+```python
+# In config.py
+SOLVER_QUESTION_TIMEOUT = 60  # Increase to 60 seconds
+```
+
+---
+
+## Session Management Issues
+
+### Issue: Session Stuck or Frozen
+
+**Symptoms**:
+- Progress not updating
+- Session status shows "processing" but no activity
+- Cannot pause or cancel
+
+**Diagnosis**:
+```bash
+# Check session status
+curl http://localhost:5000/api/solve/session/{session_id}
+
+# Check backend logs
+tail -f backend/logs/solver_main.log
+
+# Check for hung processes
+ps aux | grep python
+```
+
+**Solutions**:
+
+1. **Refresh Browser**:
+   - Reload the page
+   - Check session status again
+
+2. **Check Session State**:
+```bash
+# View session file
+cat backend/solver_sessions/{session_id}/session.json
+```
+
+3. **Resume from Checkpoint**:
+   - Sessions save every 10 questions
+   - Use resume functionality
+
+4. **Restart Backend** (last resort):
+```bash
+# Stop backend
+pkill -f "python.*app.py"
+
+# Start backend
+python backend/app.py
+```
+
+---
+
+### Issue: Cannot Pause Session
+
+**Symptoms**:
+- Pause button doesn't work
+- Error: "Cannot pause session"
+- Session continues processing
+
+**Diagnosis**:
+- Check session status
+- Verify session is in "processing" state
+
+**Solutions**:
+
+1. **Wait for Current Question**:
+   - Pause waits for current question to complete
+   - May take up to 30 seconds
+
+2. **Check Session Lock**:
+```bash
+# Check for lock files
+ls backend/solver_sessions/{session_id}/*.lock
+```
+
+3. **Force Stop** (if needed):
+   - Use cancel instead of pause
+   - Note: This discards partial results
+
+---
+
+## Performance Issues
+
+### Issue: Very Slow Processing
+
+**Symptoms**:
+- < 1 question per minute
+- High CPU/memory usage
+- System becomes unresponsive
+
+**Diagnosis**:
+```bash
+# Monitor resources
+htop
+
+# Check I/O wait
+iostat -x 1
+
+# Check network (if Ollama is remote)
+ping ollama-host
+```
+
+**Solutions**:
+
+1. **Optimize System Resources**:
+```bash
+# Close unnecessary applications
+# Increase swap space if needed
+sudo fallocate -l 4G /swapfile
+sudo chmod 600 /swapfile
+sudo mkswap /swapfile
+sudo swapon /swapfile
+```
+
+2. **Use GPU Acceleration**:
+```bash
+# Install NVIDIA drivers
+# Configure Ollama to use GPU
+export OLLAMA_GPU=1
+```
+
+3. **Reduce Concurrent Sessions**:
+```python
+# In config.py
+SOLVER_MAX_CONCURRENT_SESSIONS = 1
+```
+
+4. **Use Smaller Models**:
+```bash
+# Use quantized models
+ollama pull llama3.2:7b-q4_0
+```
+
+---
+
+## Export Issues
+
+### Issue: Export Fails
+
+**Symptoms**:
+- Download doesn't start
+- Error: "Export failed"
+- Corrupted export files
+
+**Diagnosis**:
+```bash
+# Check session completion
+curl http://localhost:5000/api/solve/session/{session_id}
+
+# Check export directory
+ls -lh backend/solver_sessions/{session_id}/
+```
+
+**Solutions**:
+
+1. **Ensure Session Complete**:
+   - Session must be in "completed" status
+   - All questions must be processed
+
+2. **Check Disk Space**:
+```bash
+df -h
+```
+
+3. **Try Different Format**:
+   - If PDF fails, try JSON or CSV
+   - PDF generation requires more resources
+
+4. **Check Permissions**:
+```bash
+chmod 755 backend/solver_sessions/{session_id}/
+```
+
+---
+
+## WebSocket Issues
+
+### Issue: Progress Updates Not Working
+
+**Symptoms**:
+- Progress bar doesn't update
+- No real-time updates
+- Connection errors in console
+
+**Diagnosis**:
+```javascript
+// Check browser console for errors
+// Look for WebSocket connection errors
+```
+
+**Solutions**:
+
+1. **Check WebSocket Connection**:
+```javascript
+// Test WebSocket manually
+const ws = new WebSocket('ws://localhost:5000/api/solve/progress');
+ws.onopen = () => console.log('Connected');
+ws.onerror = (e) => console.error('Error:', e);
+```
+
+2. **Check Firewall**:
+```bash
+# Allow WebSocket port
+sudo ufw allow 5000/tcp
+```
+
+3. **Check Nginx Config** (if using reverse proxy):
+```nginx
+location /api/solve/progress {
+    proxy_pass http://backend;
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection "upgrade";
+}
+```
+
+4. **Reconnect**:
+   - Refresh the page
+   - WebSocket should reconnect automatically
+
+---
+
+## Authentication Issues
+
+### Issue: 401 Unauthorized
+
+**Symptoms**:
+- Error: "Authentication required"
+- Cannot access endpoints
+- Token invalid
+
+**Solutions**:
+
+1. **Check Token**:
+   - Verify token is included in Authorization header
+   - Format: `Bearer <token>`
+
+2. **Refresh Token**:
+   - Log out and log back in
+   - Request new token
+
+3. **Check Token Expiry**:
+   - Tokens may expire after certain time
+   - Implement token refresh logic
+
+---
+
+### Issue: 403 Forbidden (Approval)
+
+**Symptoms**:
+- Error: "Admin privileges required"
+- Cannot approve answer keys
+- Insufficient permissions
+
+**Solutions**:
+
+1. **Verify Role**:
+   - Check user role in database
+   - Ensure user has "administrator" role
+
+2. **Contact Administrator**:
+   - Request admin privileges
+   - Verify account permissions
+
+---
+
+## Log File Locations
+
+### Main Application Logs
+
+```
+backend/logs/solver_main.log          # Main application log
+backend/logs/access.log               # HTTP access log (production)
+backend/logs/error.log                # Error log (production)
+```
+
+### Session-Specific Logs
+
+```
+backend/solver_sessions/{session_id}/logs/extraction.log   # Question extraction
+backend/solver_sessions/{session_id}/logs/solving.log      # AI solving
+backend/solver_sessions/{session_id}/logs/validation.log   # Validation
+backend/solver_sessions/{session_id}/logs/errors.log       # Session errors
+```
+
+### System Logs
+
+```
+# Ollama logs (Linux)
+sudo journalctl -u ollama -n 100
+
+# Nginx logs
+/var/log/nginx/access.log
+/var/log/nginx/error.log
+
+# System logs
+/var/log/syslog  # Linux
+/var/log/messages  # Some Linux distros
+```
+
+---
+
+## Debugging Steps
+
+### Step 1: Check Service Status
+
+```bash
+# Check Ollama
+curl http://localhost:11434/api/tags
+
+# Check backend
+curl http://localhost:5000/api/health
+
+# Check models
+ollama list
+```
+
+### Step 2: Review Logs
+
+```bash
+# Main log
+tail -f backend/logs/solver_main.log
+
+# Session log
+tail -f backend/solver_sessions/{session_id}/logs/solving.log
+
+# System log
+sudo journalctl -f
+```
+
+### Step 3: Test Components
+
+```bash
+# Test Ollama
+ollama run llama3.2 "Test"
+
+# Test PDF processing
+python -c "import fitz; print('PyMuPDF OK')"
+
+# Test imports
+python -c "from backend.question_parser import QuestionParser; print('Imports OK')"
+```
+
+### Step 4: Check Resources
+
+```bash
+# CPU and memory
+htop
+
+# Disk space
+df -h
+
+# Network
+netstat -tulpn | grep 5000
+```
+
+### Step 5: Enable Debug Mode
+
+```python
+# In backend/app.py or config.py
+app.config['DEBUG'] = True
+LOG_LEVEL = 'DEBUG'
+```
+
+---
+
+## Performance Tuning
+
+### Optimize Processing Speed
+
+1. **Use GPU**:
+```bash
+export OLLAMA_GPU=1
 ollama serve
 ```
 
-### 2. Verify Model Installation
-
+2. **Increase Workers**:
 ```bash
-# Check if moondream model is installed
-ollama list | grep moondream
-
-# If not installed, pull the model
-ollama pull moondream
+gunicorn --workers 4 backend.app:app
 ```
 
-### 3. Check Backend Server
-
+3. **Use Faster Models**:
 ```bash
-# Ensure Flask server is running
-cd backend
-python app.py
-
-# Server should start on http://localhost:5000
+# Quantized models are faster
+ollama pull llama3.2:7b-q4_0
 ```
 
-### 4. Review Debug Logs
-
-```bash
-# Check the debug log for recent errors
-tail -n 50 backend/debug_ollama.log
-```
-
----
-
-## Ollama Connection Problems
-
-### Symptom: "Could not connect to Ollama AI service"
-
-**Cause**: The Ollama service is not running or not accessible.
-
-**Solutions**:
-
-1. **Start Ollama Service**
-   ```bash
-   ollama serve
-   ```
-   Keep this terminal window open while using the application.
-
-2. **Verify Ollama Installation**
-   ```bash
-   # Check if Ollama is installed
-   ollama --version
-   
-   # If not installed, download from https://ollama.ai
-   ```
-
-3. **Check Port Availability**
-   - Ollama runs on port 11434 by default
-   - Ensure no other service is using this port
-   ```bash
-   # Windows
-   netstat -ano | findstr :11434
-   
-   # Linux/Mac
-   lsof -i :11434
-   ```
-
-4. **Restart Ollama**
-   ```bash
-   # Stop any running Ollama processes
-   # Windows: Use Task Manager to end ollama.exe
-   # Linux/Mac: pkill ollama
-   
-   # Start fresh
-   ollama serve
-   ```
-
-### Symptom: "Model 'moondream' not found"
-
-**Cause**: The required vision model is not installed.
-
-**Solutions**:
-
-1. **Pull the Model**
-   ```bash
-   ollama pull moondream
-   ```
-   This downloads the moondream vision model (~1.7GB).
-
-2. **Verify Model Installation**
-   ```bash
-   ollama list
-   ```
-   You should see `moondream` in the list.
-
-3. **Test Model Directly**
-   ```bash
-   ollama run moondream
-   ```
-   Type a test message to verify the model works.
-
-### Symptom: Ollama Starts but Crashes Immediately
-
-**Cause**: Insufficient system resources or corrupted installation.
-
-**Solutions**:
-
-1. **Check System Requirements**
-   - Minimum 8GB RAM recommended
-   - At least 4GB free disk space
-   - Modern CPU with AVX support
-
-2. **Reinstall Ollama**
-   ```bash
-   # Uninstall current version
-   # Download latest version from https://ollama.ai
-   # Install fresh copy
-   ```
-
-3. **Check Ollama Logs**
-   ```bash
-   # Windows: Check Event Viewer
-   # Linux/Mac: Check system logs
-   journalctl -u ollama
-   ```
-
----
-
-## Answer Key Extraction Failures
-
-### Symptom: "AI could not extract any answers from this file"
-
-**Cause**: The AI model cannot identify answer patterns in the image.
-
-**Solutions**:
-
-1. **Verify Answer Key Format**
-   
-   The AI looks for patterns like:
-   - `Q1: A` or `1. A` or `1) A`
-   - `Question 1: A`
-   - `1 A` (number followed by letter)
-   
-   Ensure your question paper clearly shows these patterns.
-
-2. **Improve Image Quality**
-   - Use a scanner instead of a camera
-   - Ensure good lighting (no shadows)
-   - Hold camera steady (avoid blur)
-   - Minimum 200 DPI for scanned images
-   - Take photo straight-on (avoid angles)
-
-3. **Try Different File Formats**
-   ```
-   Supported formats:
-   - JPG/JPEG (recommended)
-   - PNG
-   - PDF (automatically converted to image)
-   ```
-
-4. **Crop to Answer Key Section**
-   - If the image contains multiple pages or sections
-   - Crop to show only the answer key area
-   - Remove unnecessary borders or margins
-
-5. **Check Debug Logs**
-   ```bash
-   # View extraction attempts
-   grep "EXTRACTION_START" backend/debug_ollama.log
-   grep "PASS_" backend/debug_ollama.log
-   ```
-   
-   The logs show:
-   - How many extraction passes were attempted
-   - What the AI model returned
-   - Why each pass failed
-
-### Symptom: Only Partial Answers Extracted
-
-**Cause**: Some answers are visible but others are missed.
-
-**Solutions**:
-
-1. **Check Warning Messages**
-   - The system warns if fewer than 5 answers are extracted
-   - Review the warnings in the response
-
-2. **Verify Answer Visibility**
-   - Ensure all answers are clearly visible
-   - Check for faded text or poor contrast
-   - Verify no answers are cut off at edges
-
-3. **Manual Review**
-   - Use the extracted answers as a starting point
-   - Manually add missing answers in the UI
-   - Save the complete answer key
-
-4. **Adjust Image Preprocessing**
-   - The system automatically enhances contrast
-   - If preprocessing fails, try pre-processing the image externally:
-   ```python
-   # Example: Enhance image before upload
-   import cv2
-   img = cv2.imread('question_paper.jpg')
-   gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-   enhanced = cv2.equalizeHist(gray)
-   cv2.imwrite('enhanced_qp.jpg', enhanced)
-   ```
-
-### Symptom: Wrong Answers Extracted
-
-**Cause**: AI misreads the answer letters or question numbers.
-
-**Solutions**:
-
-1. **Verify Source Image**
-   - Double-check the original image
-   - Ensure answer key is correct in the source
-
-2. **Check for Ambiguity**
-   - Ensure letters are clearly printed (not handwritten)
-   - Avoid fonts where letters look similar (O vs 0, I vs 1)
-   - Use standard fonts (Arial, Times New Roman)
-
-3. **Manual Correction**
-   - Review extracted answers before processing OMR sheets
-   - Correct any errors in the UI
-   - Save corrected answer key for future use
-
----
-
-## Image Quality Issues
-
-### Symptom: "Image quality is too low for reliable extraction"
-
-**Cause**: The uploaded image has insufficient resolution or clarity.
-
-**Solutions**:
-
-1. **Increase Resolution**
-   - Minimum: 1024px width
-   - Recommended: 1920px width or higher
-   - For PDFs: 200 DPI minimum, 300 DPI recommended
-
-2. **Use Scanner Instead of Camera**
-   - Scanners provide consistent quality
-   - Set scanner to 300 DPI
-   - Use color or grayscale mode (not black & white)
-
-3. **Improve Camera Photos**
-   - Use good lighting (natural light or bright indoor lighting)
-   - Avoid shadows across the document
-   - Hold camera parallel to document (not at angle)
-   - Use camera's document mode if available
-   - Ensure focus is sharp (tap to focus on phone cameras)
-
-4. **Pre-process Images**
-   - Adjust brightness and contrast
-   - Remove color casts
-   - Sharpen slightly if blurry
-   - Use photo editing software or apps
-
-### Symptom: PDF Conversion Fails
-
-**Cause**: PDF file is corrupted, password-protected, or unsupported format.
-
-**Solutions**:
-
-1. **Verify PDF File**
-   - Open PDF in a PDF reader to ensure it's valid
-   - Check file size (should be reasonable, not 0 bytes)
-
-2. **Remove Password Protection**
-   ```bash
-   # Use PDF tools to remove password
-   # Or print to PDF to create unprotected copy
-   ```
-
-3. **Convert PDF to Image Manually**
-   ```bash
-   # Use online tools or software to convert PDF to JPG
-   # Upload the JPG instead of PDF
-   ```
-
-4. **Check PDF Version**
-   - Very old or very new PDF versions may have issues
-   - Try re-saving PDF in standard format (PDF 1.7)
-
----
-
-## Performance Optimization
-
-### Symptom: Extraction Takes Too Long (>30 seconds)
-
-**Cause**: Large images, slow hardware, or Ollama performance issues.
-
-**Solutions**:
-
-1. **Optimize Image Size**
-   ```python
-   # Resize large images before upload
-   from PIL import Image
-   
-   img = Image.open('large_image.jpg')
-   img.thumbnail((1920, 1920))  # Max 1920px on longest side
-   img.save('optimized_image.jpg', quality=85)
-   ```
-
-2. **Adjust Timeout Configuration**
-   ```python
-   # In backend/ollama_client.py
-   config = ExtractionConfig(
-       extraction_timeout_seconds=60,  # Increase timeout
-       max_extraction_passes=2  # Reduce passes for speed
-   )
-   ```
-
-3. **Hardware Acceleration**
-   - Ollama can use GPU if available
-   - Check Ollama documentation for GPU setup
-   - Ensure latest GPU drivers installed
-
-4. **Reduce Extraction Passes**
-   - Default: 3 passes for reliability
-   - For speed: Reduce to 1-2 passes
-   - Edit `ExtractionConfig` in `ollama_client.py`
-
-### Symptom: High Memory Usage
-
-**Cause**: Large images or multiple concurrent extractions.
-
-**Solutions**:
-
-1. **Limit Concurrent Requests**
-   - Process one extraction at a time
-   - Wait for completion before starting next
-
-2. **Reduce Image Size**
-   - Target width: 1024px (default)
-   - Larger images use more memory
-   - Preprocessing automatically resizes
-
-3. **Restart Services Periodically**
-   ```bash
-   # Restart Ollama
-   pkill ollama
-   ollama serve
-   
-   # Restart Flask backend
-   # Stop with Ctrl+C, then restart
-   python app.py
-   ```
-
-4. **Monitor System Resources**
-   ```bash
-   # Windows: Task Manager
-   # Linux: htop or top
-   # Mac: Activity Monitor
-   ```
-
-### Symptom: Slow OMR Sheet Processing
-
-**Cause**: Large batch processing or complex bubble detection.
-
-**Solutions**:
-
-1. **Process in Smaller Batches**
-   - Instead of 100 sheets at once
-   - Process 20-30 sheets per batch
-   - Reduces memory usage and improves responsiveness
-
-2. **Optimize OMR Sheet Images**
-   - Use consistent image size
-   - Ensure good contrast (dark bubbles, white background)
-   - Remove unnecessary margins
-
-3. **Disable Preprocessing for OMR Sheets**
-   - Preprocessing is for question papers
-   - OMR sheets don't need preprocessing
-   - Saves processing time
-
----
-
-## OMR Sheet Processing Issues
-
-### Symptom: Bubbles Not Detected
-
-**Cause**: Poor image quality, incorrect bubble format, or model issues.
-
-**Solutions**:
-
-1. **Check Bubble Format**
-   - Bubbles should be clearly filled (dark)
-   - Use standard OMR sheet format
-   - Ensure bubbles are circular or oval
-
-2. **Verify Image Quality**
-   - High contrast between filled and empty bubbles
-   - No shadows or glare
-   - Straight scan (not skewed)
-
-3. **Review Manual Mode**
-   - Use Manual mode to see detected bubbles
-   - Check if detection is working
-   - Manually correct misdetections
-
-4. **Retrain Bubble Detection Model**
-   - If many sheets have issues
-   - Consider retraining the bubble detection model
-   - See `backend/train_model.py`
-
-### Symptom: Wrong Answers Detected
-
-**Cause**: Multiple bubbles filled, faint marks, or detection errors.
-
-**Solutions**:
-
-1. **Check Original Sheets**
-   - Verify students filled bubbles correctly
-   - Look for multiple marks or erasures
-   - Check for stray marks
-
-2. **Use Manual Review**
-   - Review flagged answers in Manual mode
-   - Correct any misdetections
-   - Save corrected results
-
-3. **Adjust Detection Threshold**
-   - Edit bubble detection sensitivity
-   - See `backend/omr_engine.py`
-   - Balance between false positives and false negatives
-
----
-
-## File Upload Problems
-
-### Symptom: "File upload failed" or "File too large"
-
-**Cause**: File size exceeds limit or network issues.
-
-**Solutions**:
-
-1. **Check File Size Limit**
-   - Default limit: 16MB per file
-   - Compress large images
-   - Use JPG instead of PNG (smaller file size)
-
-2. **Compress Images**
-   ```python
-   from PIL import Image
-   
-   img = Image.open('large_file.jpg')
-   img.save('compressed.jpg', quality=70, optimize=True)
-   ```
-
-3. **Check Network Connection**
-   - Ensure stable internet connection
-   - Try uploading again
-   - Use wired connection if possible
-
-4. **Increase Upload Limit**
-   ```python
-   # In backend/app.py
-   app.config['MAX_CONTENT_LENGTH'] = 32 * 1024 * 1024  # 32MB
-   ```
-
-### Symptom: "Invalid file format"
-
-**Cause**: Unsupported file type uploaded.
-
-**Solutions**:
-
-1. **Use Supported Formats**
-   - Question Papers: JPG, PNG, PDF
-   - OMR Sheets: JPG, PNG
-   - Answer Keys: CSV, JSON
-
-2. **Convert File Format**
-   - Use image editing software
-   - Convert to JPG or PNG
-   - Ensure proper file extension
-
----
-
-## Debug Logging
-
-### Understanding Debug Logs
-
-The system logs all extraction attempts to `backend/debug_ollama.log`.
-
-**Log Entry Format**:
-```
-2024-01-15 10:30:45 - [EXTRACTION_START] File: question_paper.jpg
-2024-01-15 10:30:45 - [PREPROCESSING] PDF conversion: 245ms
-2024-01-15 10:30:45 - [PREPROCESSING] Image enhancement: 123ms
-2024-01-15 10:30:46 - [PASS_1] Model: moondream, Strategy: detailed_json
-2024-01-15 10:30:48 - [PASS_1] Raw output: {"1":"A","2":"C"...
-2024-01-15 10:30:48 - [PASS_1] Result: SUCCESS, Count: 25, Duration: 2134ms
-2024-01-15 10:30:48 - [VALIDATION] Warning: Duplicate question 5 removed
-2024-01-15 10:30:48 - [EXTRACTION_COMPLETE] Total: 2502ms, Final count: 24
-```
-
-**Key Log Tags**:
-- `[EXTRACTION_START]` - New extraction attempt begins
-- `[PREPROCESSING]` - Image preprocessing operations
-- `[PASS_N]` - Extraction pass number (1, 2, 3)
-- `[VALIDATION]` - Validation warnings
-- `[EXTRACTION_COMPLETE]` - Final result
-- `[CLEANUP]` - Temporary file cleanup
-
-### Enabling Verbose Logging
-
+4. **Optimize Timeout**:
 ```python
-# In backend/ollama_client.py
-# Change log level for more details
-config = ExtractionConfig(
-    log_path="debug_ollama.log"
-)
-
-# View logs in real-time
-tail -f backend/debug_ollama.log
+# Balance between speed and accuracy
+SOLVER_QUESTION_TIMEOUT = 20  # Reduce from 30
 ```
 
-### Common Log Patterns
+### Optimize Memory Usage
 
-**Successful Extraction**:
-```
-[PASS_1] Result: SUCCESS, Count: 25, Duration: 2134ms
-[EXTRACTION_COMPLETE] Total: 2502ms, Final count: 25
-```
-
-**All Passes Failed**:
-```
-[PASS_1] Result: FAILED, Count: 0, Duration: 2134ms
-[PASS_2] Result: FAILED, Count: 0, Duration: 1876ms
-[PASS_3] Result: FAILED, Count: 0, Duration: 2001ms
-All extraction passes failed — returning {}
+1. **Limit Concurrent Sessions**:
+```python
+SOLVER_MAX_CONCURRENT_SESSIONS = 1
 ```
 
-**Partial Extraction**:
+2. **Clear Old Sessions**:
+```bash
+# Remove sessions older than 30 days
+find backend/solver_sessions -type d -mtime +30 -exec rm -rf {} +
 ```
-[PASS_1] Result: SUCCESS, Count: 3, Duration: 2134ms
-[VALIDATION] Warning: Only 3 answers extracted (< 5)
+
+3. **Use Swap**:
+```bash
+# Add swap space
+sudo fallocate -l 4G /swapfile
+sudo mkswap /swapfile
+sudo swapon /swapfile
+```
+
+### Optimize Disk I/O
+
+1. **Use SSD**:
+   - Store sessions on SSD if possible
+   - Faster read/write speeds
+
+2. **Compress Old Sessions**:
+```bash
+# Compress completed sessions
+tar -czf session_{id}.tar.gz backend/solver_sessions/{id}/
 ```
 
 ---
 
 ## Common Error Messages
 
-### Error: "No question paper file provided"
-
-**HTTP Status**: 400 Bad Request
-
-**Cause**: No file was uploaded in the request.
-
-**Solution**: Ensure you select a file before clicking upload.
-
----
-
-### Error: "The uploaded file could not be found"
-
-**HTTP Status**: 404 Not Found
-
-**Cause**: File was not saved properly or was deleted.
-
-**Solutions**:
-1. Try uploading again
-2. Check disk space
-3. Verify write permissions on `temp_uploads/` directory
-
----
-
-### Error: "AI could not extract any answers from this file"
-
-**HTTP Status**: 422 Unprocessable Entity
-
-**Cause**: All extraction passes failed to find answers.
-
-**Solutions**: See [Answer Key Extraction Failures](#answer-key-extraction-failures) section above.
-
----
-
-### Error: "An error occurred while processing the file"
-
-**HTTP Status**: 500 Internal Server Error
-
-**Cause**: Unexpected error during processing.
-
-**Solutions**:
-1. Check debug logs for details
-2. Verify file is not corrupted
-3. Try a different file
-4. Restart backend server
-
----
-
-### Error: "Could not connect to Ollama AI service"
-
-**HTTP Status**: 500 Internal Server Error
-
-**Cause**: Ollama service is not running or not accessible.
-
-**Solutions**: See [Ollama Connection Problems](#ollama-connection-problems) section above.
-
----
-
-## Advanced Troubleshooting
-
-### Testing Ollama Directly
-
-Test if Ollama is working independently of the application:
-
-```bash
-# Test text model
-ollama run llama2 "Hello, how are you?"
-
-# Test vision model with an image
-ollama run moondream "Describe this image" --image question_paper.jpg
-```
-
-### Testing Extraction Function Directly
-
-Test the extraction function from command line:
-
-```bash
-cd backend
-python ollama_client.py path/to/question_paper.jpg
-```
-
-This runs extraction and prints results directly.
-
-### Checking Python Dependencies
-
-Ensure all required packages are installed:
-
-```bash
-cd backend
-pip install -r requirements.txt
-
-# Verify specific packages
-python -c "import ollama; print(ollama.__version__)"
-python -c "import cv2; print(cv2.__version__)"
-python -c "import fitz; print(fitz.__version__)"
-```
-
-### Network Diagnostics
-
-Check if Ollama API is accessible:
-
-```bash
-# Test Ollama API endpoint
-curl http://localhost:11434/api/tags
-
-# Should return list of installed models
-```
-
-### Clearing Temporary Files
-
-Clean up temporary files that may cause issues:
-
-```bash
-# Remove temporary uploads
-rm -rf backend/temp_uploads/*
-
-# Remove temporary preprocessed images
-rm -rf backend/*_preprocessed.jpg
-rm -rf backend/*_converted.jpg
-
-# Clear debug log (optional)
-> backend/debug_ollama.log
-```
+| Error Message | Cause | Solution |
+|---------------|-------|----------|
+| "Ollama service is not available" | Ollama not running | Start Ollama: `ollama serve` |
+| "Model not found" | Model not installed | Install model: `ollama pull llama3.2` |
+| "Invalid PDF file" | Corrupted or encrypted PDF | Check PDF validity, remove password |
+| "Extraction failed" | Poor PDF quality | Improve PDF quality, use digital PDF |
+| "Timeout" | Question too complex | Increase timeout or simplify question |
+| "Session not found" | Invalid session ID | Check session ID, verify session exists |
+| "Cannot approve" | Flagged questions not reviewed | Review all flagged questions first |
+| "Export failed" | Disk space or permissions | Check disk space and permissions |
 
 ---
 
 ## Getting Help
 
-If you've tried the solutions above and still have issues:
+### Before Contacting Support
 
-1. **Check Debug Logs**
-   - Review `backend/debug_ollama.log`
-   - Look for error messages and stack traces
+1. Check this troubleshooting guide
+2. Review relevant log files
+3. Try basic debugging steps
+4. Gather error messages and session IDs
 
-2. **Gather Information**
-   - What were you trying to do?
-   - What error message did you see?
-   - What have you tried already?
-   - System information (OS, RAM, Python version)
+### Information to Provide
 
-3. **Create an Issue**
-   - Visit the GitHub repository
-   - Create a new issue with details above
-   - Include relevant log excerpts (remove sensitive data)
+When reporting issues, include:
+- Session ID (if applicable)
+- Error messages (exact text)
+- Steps to reproduce
+- Log file excerpts
+- System information (OS, Python version, etc.)
+- Screenshots (if UI issue)
 
-4. **Community Support**
-   - Check existing GitHub issues
-   - Search for similar problems
-   - Ask in discussions
+### Support Channels
 
----
-
-## Preventive Maintenance
-
-### Regular Maintenance Tasks
-
-1. **Clear Temporary Files Weekly**
-   ```bash
-   rm -rf backend/temp_uploads/*
-   ```
-
-2. **Rotate Debug Logs**
-   ```bash
-   # Archive old logs
-   mv backend/debug_ollama.log backend/debug_ollama_$(date +%Y%m%d).log
-   
-   # Keep only last 7 days
-   find backend/ -name "debug_ollama_*.log" -mtime +7 -delete
-   ```
-
-3. **Update Ollama Models**
-   ```bash
-   # Check for model updates
-   ollama pull moondream
-   ```
-
-4. **Update Python Dependencies**
-   ```bash
-   cd backend
-   pip install --upgrade -r requirements.txt
-   ```
-
-### Performance Monitoring
-
-Monitor these metrics for optimal performance:
-
-- **Extraction Success Rate**: Should be >90%
-- **Average Processing Time**: Should be <10 seconds
-- **Memory Usage**: Should stay under 2GB
-- **Disk Space**: Keep at least 5GB free
-
-### Best Practices
-
-1. **Image Quality**
-   - Always use high-resolution images (1920px+ width)
-   - Prefer scanned images over photos
-   - Ensure good lighting and contrast
-
-2. **File Management**
-   - Clean up temporary files regularly
-   - Archive old debug logs
-   - Keep backups of important answer keys
-
-3. **System Resources**
-   - Close unnecessary applications
-   - Ensure adequate RAM (8GB+ recommended)
-   - Keep disk space available (5GB+ free)
-
-4. **Regular Updates**
-   - Update Ollama regularly
-   - Update Python packages
-   - Check for application updates
-
----
-
-## Quick Reference
-
-### Essential Commands
-
-```bash
-# Start Ollama
-ollama serve
-
-# Check Ollama status
-ollama list
-
-# Pull moondream model
-ollama pull moondream
-
-# Start Flask backend
-cd backend
-python app.py
-
-# View debug logs
-tail -f backend/debug_ollama.log
-
-# Test extraction directly
-python backend/ollama_client.py question_paper.jpg
-```
-
-### Configuration Files
-
-- `backend/ollama_client.py` - Extraction configuration
-- `backend/app.py` - API endpoints and error messages
-- `backend/debug_ollama.log` - Debug logs
-- `backend/requirements.txt` - Python dependencies
-
-### Important Directories
-
-- `backend/temp_uploads/` - Temporary file storage
-- `backend/tests/` - Test files
-- `docs/` - Documentation
-- `frontend/` - Web interface
+- Documentation: `/docs/`
+- GitHub Issues: [repository-url]/issues
+- Email: support@example.com
+- User Forum: [forum-url]
 
 ---
 

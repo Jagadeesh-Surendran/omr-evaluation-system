@@ -83,3 +83,43 @@ def synthetic_omr_image():
                 cv2.circle(img, (cx, cy), bubble_r - 3, (30, 30, 30), -1)
 
     return img
+
+
+# ── Answer key image fixture ──────────────────────────────────────────────────
+
+@pytest.fixture
+def sample_answer_key_image():
+    """Create a synthetic answer key image for testing."""
+    import tempfile
+    
+    # Create a white image with text
+    img = np.ones((800, 600, 3), dtype=np.uint8) * 255
+    
+    # Add some text to simulate an answer key
+    font = cv2.FONT_HERSHEY_SIMPLEX
+    y_pos = 100
+    for i in range(1, 6):
+        answer = chr(65 + (i % 5))  # A, B, C, D, E
+        text = f"Q{i}: {answer}"
+        cv2.putText(img, text, (50, y_pos), font, 1, (0, 0, 0), 2)
+        y_pos += 80
+    
+    # Save to temporary file
+    with tempfile.NamedTemporaryFile(suffix='.jpg', delete=False) as f:
+        cv2.imwrite(f.name, img)
+        yield f.name
+    
+    # Cleanup
+    if os.path.exists(f.name):
+        os.unlink(f.name)
+
+
+# ── Flask app client fixture ──────────────────────────────────────────────────
+
+@pytest.fixture
+def client():
+    """Create a test client for the Flask app."""
+    from app import app as flask_app
+    flask_app.config['TESTING'] = True
+    with flask_app.test_client() as test_client:
+        yield test_client

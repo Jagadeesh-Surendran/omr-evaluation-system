@@ -1,0 +1,573 @@
+{
+  "info": {
+    "name": "OMR Evaluation System API",
+    "description": "EvalGenius AI - Next-generation Optical Mark Recognition system with AI-powered answer key extraction",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": "1.0.0"
+  },
+  "item": [
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/health",
+          "host": ["{{base_url}}"],
+          "path": ["api", "health"]
+        },
+        "description": "Check if the API server is running"
+      },
+      "response": []
+    },
+    {
+      "name": "Extract Answer Key (AI)",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "qp_file",
+              "type": "file",
+              "src": [],
+              "description": "Question paper image or PDF file"
+            },
+            {
+              "key": "expected_count",
+              "value": "100",
+              "type": "text",
+              "description": "Optional: Expected number of questions for validation"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{base_url}}/api/extract_key",
+          "host": ["{{base_url}}"],
+          "path": ["api", "extract_key"]
+        },
+        "description": "Extract answer key from question paper using AI (Ollama moondream model)"
+      },
+      "response": []
+    },
+    {
+      "name": "Evaluate OMR Sheets (Batch)",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "omr_files",
+              "type": "file",
+              "src": [],
+              "description": "Multiple OMR sheet images"
+            },
+            {
+              "key": "answer_key_json",
+              "value": "{\"0\":0,\"1\":2,\"2\":1}",
+              "type": "text",
+              "description": "Answer key in JSON format (0-based indices)"
+            },
+            {
+              "key": "num_options",
+              "value": "5",
+              "type": "text",
+              "description": "Number of options per question (3, 4, or 5)"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{base_url}}/api/evaluate",
+          "host": ["{{base_url}}"],
+          "path": ["api", "evaluate"]
+        },
+        "description": "Evaluate multiple OMR sheets with answer key"
+      },
+      "response": []
+    },
+    {
+      "name": "Evaluate OMR Sheets (Multiplex)",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "omr_files",
+              "type": "file",
+              "src": [],
+              "description": "Multiple OMR sheet images"
+            },
+            {
+              "key": "answer_keys_multiplex",
+              "value": "{\"A\":{\"0\":0,\"1\":2},\"B\":{\"0\":1,\"1\":3}}",
+              "type": "text",
+              "description": "Multiple answer keys for different sets (A, B)"
+            },
+            {
+              "key": "num_options",
+              "value": "5",
+              "type": "text",
+              "description": "Number of options per question"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{base_url}}/api/evaluate",
+          "host": ["{{base_url}}"],
+          "path": ["api", "evaluate"]
+        },
+        "description": "Evaluate OMR sheets with multiple answer keys (Set A, Set B)"
+      },
+      "response": []
+    },
+    {
+      "name": "Evaluate Single Sheet",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "omr_file",
+              "type": "file",
+              "src": [],
+              "description": "Single OMR sheet image"
+            },
+            {
+              "key": "answer_key_json",
+              "value": "{\"0\":0,\"1\":2,\"2\":1}",
+              "type": "text",
+              "description": "Answer key in JSON format"
+            },
+            {
+              "key": "num_options",
+              "value": "5",
+              "type": "text"
+            },
+            {
+              "key": "index",
+              "value": "0",
+              "type": "text",
+              "description": "Sheet index for progress tracking"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{base_url}}/api/evaluate_single",
+          "host": ["{{base_url}}"],
+          "path": ["api", "evaluate_single"]
+        },
+        "description": "Evaluate a single OMR sheet (for frontend progress display)"
+      },
+      "response": []
+    },
+    {
+      "name": "Evaluate Batch (Parallel)",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "omr_files",
+              "type": "file",
+              "src": [],
+              "description": "Multiple OMR sheet images"
+            },
+            {
+              "key": "answer_key_json",
+              "value": "{\"0\":0,\"1\":2,\"2\":1}",
+              "type": "text"
+            },
+            {
+              "key": "num_options",
+              "value": "5",
+              "type": "text"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{base_url}}/api/evaluate_batch",
+          "host": ["{{base_url}}"],
+          "path": ["api", "evaluate_batch"]
+        },
+        "description": "Process all OMR sheets in parallel using ThreadPoolExecutor (faster for large batches)"
+      },
+      "response": []
+    },
+    {
+      "name": "Link Student Database",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "db_file",
+              "type": "file",
+              "src": [],
+              "description": "CSV file with student names (Roll Number, Name)"
+            },
+            {
+              "key": "current_results",
+              "value": "[]",
+              "type": "text",
+              "description": "JSON array of current evaluation results"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{base_url}}/api/link_db",
+          "host": ["{{base_url}}"],
+          "path": ["api", "link_db"]
+        },
+        "description": "Map student names from CSV to results by row position"
+      },
+      "response": []
+    },
+    {
+      "name": "Export Results (CSV)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"results\": [\n    {\n      \"id\": \"CAND-1001\",\n      \"name\": \"Student 1\",\n      \"score\": 85.5,\n      \"filename\": \"sheet1.jpg\"\n    }\n  ]\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/export?format=csv",
+          "host": ["{{base_url}}"],
+          "path": ["api", "export"],
+          "query": [
+            {
+              "key": "format",
+              "value": "csv",
+              "description": "Export format: csv or excel"
+            }
+          ]
+        },
+        "description": "Export evaluation results as CSV file"
+      },
+      "response": []
+    },
+    {
+      "name": "Export Results (Excel)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"results\": [\n    {\n      \"id\": \"CAND-1001\",\n      \"name\": \"Student 1\",\n      \"score\": 85.5,\n      \"filename\": \"sheet1.jpg\",\n      \"question_details\": []\n    }\n  ]\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/export?format=excel",
+          "host": ["{{base_url}}"],
+          "path": ["api", "export"],
+          "query": [
+            {
+              "key": "format",
+              "value": "excel"
+            }
+          ]
+        },
+        "description": "Export evaluation results as Excel file with detailed question analysis"
+      },
+      "response": []
+    },
+    {
+      "name": "Machine Connect",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"port\": \"COM3\",\n  \"baudrate\": 9600\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/machine/connect",
+          "host": ["{{base_url}}"],
+          "path": ["api", "machine", "connect"]
+        },
+        "description": "Connect to OMR hardware via serial port"
+      },
+      "response": []
+    },
+    {
+      "name": "Machine Disconnect",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/machine/disconnect",
+          "host": ["{{base_url}}"],
+          "path": ["api", "machine", "disconnect"]
+        },
+        "description": "Disconnect from OMR hardware"
+      },
+      "response": []
+    },
+    {
+      "name": "Machine Simulate",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"enable\": true\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/machine/simulate",
+          "host": ["{{base_url}}"],
+          "path": ["api", "machine", "simulate"]
+        },
+        "description": "Start/stop hardware simulation mode"
+      },
+      "response": []
+    },
+    {
+      "name": "AI Solver - Upload PDF",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "qp_file",
+              "type": "file",
+              "src": [],
+              "description": "Question bank PDF file"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{base_url}}/api/solve/upload",
+          "host": ["{{base_url}}"],
+          "path": ["api", "solve", "upload"]
+        },
+        "description": "Upload question bank PDF and start AI solver session"
+      },
+      "response": []
+    },
+    {
+      "name": "AI Solver - Get Session Status",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/solve/session/{{session_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["api", "solve", "session", "{{session_id}}"]
+        },
+        "description": "Get current status and results of a solver session"
+      },
+      "response": []
+    },
+    {
+      "name": "AI Solver - Pause Session",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/solve/session/{{session_id}}/pause",
+          "host": ["{{base_url}}"],
+          "path": ["api", "solve", "session", "{{session_id}}", "pause"]
+        },
+        "description": "Pause an active solver session"
+      },
+      "response": []
+    },
+    {
+      "name": "AI Solver - Resume Session",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/solve/session/{{session_id}}/resume",
+          "host": ["{{base_url}}"],
+          "path": ["api", "solve", "session", "{{session_id}}", "resume"]
+        },
+        "description": "Resume a paused solver session"
+      },
+      "response": []
+    },
+    {
+      "name": "AI Solver - Cancel Session",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/solve/session/{{session_id}}/cancel",
+          "host": ["{{base_url}}"],
+          "path": ["api", "solve", "session", "{{session_id}}", "cancel"]
+        },
+        "description": "Cancel a solver session and discard results"
+      },
+      "response": []
+    },
+    {
+      "name": "AI Solver - Update Answer",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"answer\": \"C\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/solve/session/{{session_id}}/answer/1",
+          "host": ["{{base_url}}"],
+          "path": ["api", "solve", "session", "{{session_id}}", "answer", "1"]
+        },
+        "description": "Manually correct an AI-generated answer"
+      },
+      "response": []
+    },
+    {
+      "name": "AI Solver - Add Note",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"note\": \"This question needs review\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/solve/session/{{session_id}}/note/1",
+          "host": ["{{base_url}}"],
+          "path": ["api", "solve", "session", "{{session_id}}", "note", "1"]
+        },
+        "description": "Add a note to a specific question"
+      },
+      "response": []
+    },
+    {
+      "name": "AI Solver - Approve Answer Key",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"user_id\": \"admin\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/solve/session/{{session_id}}/approve",
+          "host": ["{{base_url}}"],
+          "path": ["api", "solve", "session", "{{session_id}}", "approve"]
+        },
+        "description": "Approve and finalize the AI-generated answer key (requires admin)"
+      },
+      "response": []
+    },
+    {
+      "name": "AI Solver - Export Answer Key (JSON)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/solve/session/{{session_id}}/export?format=json",
+          "host": ["{{base_url}}"],
+          "path": ["api", "solve", "session", "{{session_id}}", "export"],
+          "query": [
+            {
+              "key": "format",
+              "value": "json"
+            }
+          ]
+        },
+        "description": "Export answer key in JSON format for OMR evaluation"
+      },
+      "response": []
+    },
+    {
+      "name": "AI Solver - Export Answer Key (CSV)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/solve/session/{{session_id}}/export?format=csv",
+          "host": ["{{base_url}}"],
+          "path": ["api", "solve", "session", "{{session_id}}", "export"],
+          "query": [
+            {
+              "key": "format",
+              "value": "csv"
+            }
+          ]
+        },
+        "description": "Export answer key in CSV format with details"
+      },
+      "response": []
+    },
+    {
+      "name": "AI Solver - Use for Evaluation",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/solve/session/{{session_id}}/use-for-evaluation",
+          "host": ["{{base_url}}"],
+          "path": ["api", "solve", "session", "{{session_id}}", "use-for-evaluation"]
+        },
+        "description": "Use the generated answer key directly for OMR evaluation"
+      },
+      "response": []
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:5000",
+      "type": "string"
+    },
+    {
+      "key": "session_id",
+      "value": "",
+      "type": "string",
+      "description": "AI Solver session ID (set after upload)"
+    }
+  ]
+}

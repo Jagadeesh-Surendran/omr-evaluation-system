@@ -5,6 +5,7 @@ import csv
 import io
 import traceback
 import concurrent.futures
+from functools import wraps
 
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
@@ -16,10 +17,85 @@ from omr_engine import evaluate_omr
 from ollama_client import extract_answer_key_from_image
 from full_evaluator import FullOMREvaluator
 from hardware_handler import OMRHardwareHandler
+from session_manager import SessionManager
+from answer_key_generator import AnswerKeyGenerator
+from dashboard_analytics import DashboardAnalytics
+from solver_logging_config import get_logger
 
 app = Flask(__name__)
 CORS(app)
 socketio = SocketIO(app, cors_allowed_origins="*")
+
+# Initialize AI Question Solver components
+session_manager = SessionManager()
+answer_key_generator = AnswerKeyGenerator()
+dashboard_analytics = DashboardAnalytics()
+
+# Initialize logger for API endpoints
+api_logger = get_logger("api")
+
+
+# ---------------------------------------------------------------------------
+# Authentication and Authorization Middleware
+# ---------------------------------------------------------------------------
+
+def require_auth(f):
+    """
+    Decorator to require authentication for endpoints.
+    
+    For now, this is a placeholder that always allows access.
+    In production, this should check for valid authentication tokens.
+    """
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        # TODO: Implement actual authentication check
+        # For now, we'll check for a simple API key in headers
+        
+        # Skip auth for development
+        # In production, uncomment the following:
+        # auth_header = request.headers.get('Authorization')
+        # if not auth_header or not auth_header.startswith('Bearer '):
+        #     return jsonify({
+        #         "error": "Authentication required",
+        #         "error_type": "auth_required"
+        #     }), 401
+        
+        return f(*args, **kwargs)
+    return decorated_function
+
+
+def require_admin(f):
+    """
+    Decorator to require admin privileges for endpoints.
+    
+    For now, this is a placeholder that always allows access.
+    In production, this should check for admin role.
+    """
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        # TODO: Implement actual authorization check
+        # For now, we'll check for a simple admin flag in headers
+        
+        # Skip auth for development
+        # In production, uncomment the following:
+        # auth_header = request.headers.get('Authorization')
+        # if not auth_header:
+        #     return jsonify({
+        #         "error": "Authentication required",
+        #         "error_type": "auth_required"
+        #     }), 401
+        #
+        # # Check if user has admin role
+        # # This would typically involve decoding a JWT token and checking roles
+        # is_admin = request.headers.get('X-User-Role') == 'admin'
+        # if not is_admin:
+        #     return jsonify({
+        #         "error": "Admin privileges required",
+        #         "error_type": "insufficient_privileges"
+        #     }), 403
+        
+        return f(*args, **kwargs)
+    return decorated_function
 
 def on_hardware_data(data):
     print(f"[App] Hardware Data Received, Emitting to frontend: {data}")
@@ -525,8 +601,16 @@ def extract_key():
                 return jsonify(ERROR_MESSAGES["file_not_found"]), 404
             
             try:
+                # Get optional expected question count from form data
+                expected_count = request.form.get('expected_count')
+                expected_count = int(expected_count) if expected_count and expected_count.isdigit() else None
+                
+                # Create config with expected count if provided
+                from ollama_client import ExtractionConfig
+                config = ExtractionConfig(expected_question_count=expected_count) if expected_count else None
+                
                 # Extract answer key with metadata
-                extracted_key, warnings, processing_time_ms = extract_answer_key_from_image(temp_path)
+                extracted_key, warnings, processing_time_ms = extract_answer_key_from_image(temp_path, config=config)
             except FileNotFoundError as fnf:
                 # File not found error (404)
                 return jsonify(ERROR_MESSAGES["file_not_found"]), 404
@@ -894,6 +978,799 @@ def evaluate_batch():
     except Exception as e:
         print(traceback.format_exc())
         return jsonify({"error": str(e)}), 500
+
+
+# ---------------------------------------------------------------------------
+# AI Question Solver Endpoints
+# ---------------------------------------------------------------------------
+
+@app.route('/api/solve/upload', methods=['POST'])
+@require_auth
+def solve_upload():
+    """
+    Upload PDF and start solver session.
+    
+    Request:
+        - qp_file: PDF file containing questions
+        
+    Response:
+        {
+            "session_id": "uuid",
+            "status": "pending",
+            "message": "Session created successfully"
+        }
+    """
+    try:
+        api_logger.info("[API] Received PDF upload request")
+        
+        # Check if file was provided
+        if 'qp_file' not in request.files:
+            api_logger.warning("[API] Upload request missing file")
+            return jsonify({
+                "error": "No question paper file provided",
+                "error_type": "missing_file"
+            }), 400
+        
+        file = request.files['qp_file']
+        
+        # Validate file has a filename
+        if not file.filename:
+            api_logger.warning("[API] Upload request has empty filename")
+            return jsonify({
+                "error": "No question paper file provided",
+                "error_type": "missing_file"
+            }), 400
+        
+        api_logger.info(f"[API] Processing upload: {file.filename}")
+        
+        # Check Ollama service availability
+        try:
+            from ollama_client import OllamaClient
+            ollama_client = OllamaClient()
+            # Simple check - try to list models
+            # If this fails, Ollama is not available
+            api_logger.debug("[API] Checking Ollama service availability")
+        except Exception as e:
+            api_logger.error(f"[API] Ollama service unavailable: {e}")
+            return jsonify({
+                "error": "Ollama AI service is not available",
+                "error_type": "service_unavailable",
+                "suggestions": [
+                    "Ensure Ollama is installed and running",
+                    "Try running 'ollama serve' in a terminal"
+                ]
+            }), 503
+        
+        # Save uploaded file temporarily
+        temp_dir = os.path.join(os.getcwd(), 'temp_uploads')
+        os.makedirs(temp_dir, exist_ok=True)
+        temp_path = os.path.join(temp_dir, f"qp_{uuid.uuid4().hex}_{secure_filename(file.filename)}")
+        
+        try:
+            file.save(temp_path)
+            api_logger.info(f"[API] Saved uploaded file to: {temp_path}")
+            
+            # Create new session
+            session_id = session_manager.create_session(temp_path)
+            api_logger.info(f"[API] Created session: {session_id}")
+            
+            # Start processing in background
+            session_manager.start_processing(session_id)
+            api_logger.info(f"[API] Started processing for session: {session_id}")
+            
+            return jsonify({
+                "session_id": session_id,
+                "status": "processing",
+                "message": "Session created and processing started"
+            }), 200
+            
+        except Exception as e:
+            # Clean up temp file on error
+            if os.path.exists(temp_path):
+                try:
+                    os.remove(temp_path)
+                    api_logger.debug(f"[API] Cleaned up temp file: {temp_path}")
+                except Exception:
+                    pass
+            raise
+            
+    except Exception as e:
+        api_logger.error(f"[API] Error in solve_upload: {e}")
+        api_logger.error(traceback.format_exc())
+        return jsonify({
+            "error": str(e),
+            "error_type": "processing_error"
+        }), 500
+
+
+@app.route('/api/solve/session/<session_id>', methods=['GET'])
+@require_auth
+def solve_session_status(session_id):
+    """
+    Get session status and results.
+    
+    Response:
+        {
+            "session_id": "uuid",
+            "status": "processing|completed|paused|cancelled|error",
+            "total_questions": 100,
+            "processed_count": 45,
+            "solved_count": 42,
+            "unsolvable_count": 2,
+            "error_count": 1,
+            "average_confidence": 0.82,
+            "questions": [...],
+            "results": {...},
+            "validation_report": {...}
+        }
+    """
+    try:
+        api_logger.info(f"[API] Session status request for: {session_id}")
+        
+        # Get session
+        session = session_manager.get_session(session_id)
+        
+        if not session:
+            api_logger.warning(f"[API] Session not found: {session_id}")
+            return jsonify({
+                "error": f"Session {session_id} not found",
+                "error_type": "not_found"
+            }), 404
+        
+        api_logger.debug(f"[API] Session {session_id} status: {session.status}, processed: {session.processed_count}/{session.total_questions}")
+        
+        # Calculate average confidence
+        average_confidence = 0.0
+        if session.results:
+            confidence_scores = [
+                r.confidence for r in session.results.values()
+                if r.status == "solved"
+            ]
+            if confidence_scores:
+                average_confidence = sum(confidence_scores) / len(confidence_scores)
+        
+        # Build response
+        response = {
+            "session_id": session.session_id,
+            "status": session.status,
+            "total_questions": session.total_questions,
+            "processed_count": session.processed_count,
+            "solved_count": session.solved_count,
+            "unsolvable_count": session.unsolvable_count,
+            "error_count": session.error_count,
+            "average_confidence": round(average_confidence, 2),
+            "start_time": session.start_time,
+            "end_time": session.end_time
+        }
+        
+        # Include questions if available
+        if session.questions:
+            response["questions"] = [
+                {
+                    "number": q.number,
+                    "text": q.text,
+                    "options": [
+                        {"label": opt.label, "text": opt.text}
+                        for opt in q.options
+                    ],
+                    "page_number": q.page_number,
+                    "question_type": q.question_type
+                }
+                for q in session.questions
+            ]
+        
+        # Include results if available
+        if session.results:
+            response["results"] = {
+                str(qnum): {
+                    "question_number": result.question_number,
+                    "selected_option": result.selected_option,
+                    "explanation": result.explanation,
+                    "confidence": result.confidence,
+                    "status": result.status,
+                    "error_message": result.error_message
+                }
+                for qnum, result in session.results.items()
+            }
+        
+        # Include validation report if available
+        if session.validation_report:
+            response["validation_report"] = {
+                "total_questions": session.validation_report.total_questions,
+                "issues": [
+                    {
+                        "question_number": issue.question_number,
+                        "severity": issue.severity,
+                        "issue_type": issue.issue_type,
+                        "description": issue.description
+                    }
+                    for issue in session.validation_report.issues
+                ],
+                "flagged_questions": list(session.validation_report.flagged_questions),
+                "average_confidence": session.validation_report.average_confidence
+            }
+        
+        # Include user corrections and notes
+        response["user_corrections"] = session.user_corrections
+        response["user_notes"] = session.user_notes
+        
+        api_logger.info(f"[API] Returning session status for: {session_id}")
+        return jsonify(response), 200
+        
+    except Exception as e:
+        api_logger.error(f"[API] Error in solve_session_status: {e}")
+        api_logger.error(traceback.format_exc())
+        return jsonify({
+            "error": str(e),
+            "error_type": "processing_error"
+        }), 500
+
+
+@app.route('/api/solve/session/<session_id>/pause', methods=['POST'])
+@require_auth
+def solve_session_pause(session_id):
+    """
+    Pause active session.
+    
+    Response:
+        {
+            "success": true,
+            "message": "Session paused successfully"
+        }
+    """
+    try:
+        success = session_manager.pause_session(session_id)
+        
+        if success:
+            return jsonify({
+                "success": True,
+                "message": "Session paused successfully"
+            }), 200
+        else:
+            return jsonify({
+                "error": "Failed to pause session",
+                "error_type": "operation_failed"
+            }), 400
+            
+    except Exception as e:
+        print(f"Error in solve_session_pause: {e}")
+        print(traceback.format_exc())
+        return jsonify({
+            "error": str(e),
+            "error_type": "processing_error"
+        }), 500
+
+
+@app.route('/api/solve/session/<session_id>/resume', methods=['POST'])
+@require_auth
+def solve_session_resume(session_id):
+    """
+    Resume paused session.
+    
+    Response:
+        {
+            "success": true,
+            "message": "Session resumed successfully"
+        }
+    """
+    try:
+        success = session_manager.resume_session(session_id)
+        
+        if success:
+            return jsonify({
+                "success": True,
+                "message": "Session resumed successfully"
+            }), 200
+        else:
+            return jsonify({
+                "error": "Failed to resume session",
+                "error_type": "operation_failed"
+            }), 400
+            
+    except Exception as e:
+        print(f"Error in solve_session_resume: {e}")
+        print(traceback.format_exc())
+        return jsonify({
+            "error": str(e),
+            "error_type": "processing_error"
+        }), 500
+
+
+@app.route('/api/solve/session/<session_id>/cancel', methods=['POST'])
+@require_auth
+def solve_session_cancel(session_id):
+    """
+    Cancel session and discard results.
+    
+    Response:
+        {
+            "success": true,
+            "message": "Session cancelled successfully"
+        }
+    """
+    try:
+        success = session_manager.cancel_session(session_id)
+        
+        if success:
+            return jsonify({
+                "success": True,
+                "message": "Session cancelled successfully"
+            }), 200
+        else:
+            return jsonify({
+                "error": "Failed to cancel session",
+                "error_type": "operation_failed"
+            }), 400
+            
+    except Exception as e:
+        print(f"Error in solve_session_cancel: {e}")
+        print(traceback.format_exc())
+        return jsonify({
+            "error": str(e),
+            "error_type": "processing_error"
+        }), 500
+
+
+@app.route('/api/solve/session/<session_id>/answer/<int:question_num>', methods=['PUT'])
+@require_auth
+def solve_update_answer(session_id, question_num):
+    """
+    Update specific answer (manual correction).
+    
+    Request:
+        {
+            "answer": "A|B|C|D|E"
+        }
+        
+    Response:
+        {
+            "success": true,
+            "message": "Answer updated successfully"
+        }
+    """
+    try:
+        data = request.json
+        
+        if not data or 'answer' not in data:
+            return jsonify({
+                "error": "Answer option is required",
+                "error_type": "missing_parameter"
+            }), 400
+        
+        new_answer = data['answer'].upper()
+        
+        # Validate answer option
+        if new_answer not in ['A', 'B', 'C', 'D', 'E']:
+            return jsonify({
+                "error": f"Invalid answer option: {new_answer}. Must be A, B, C, D, or E",
+                "error_type": "invalid_parameter"
+            }), 400
+        
+        success = session_manager.update_answer(session_id, question_num, new_answer)
+        
+        if success:
+            return jsonify({
+                "success": True,
+                "message": f"Answer for question {question_num} updated to {new_answer}"
+            }), 200
+        else:
+            return jsonify({
+                "error": "Failed to update answer",
+                "error_type": "operation_failed"
+            }), 400
+            
+    except Exception as e:
+        print(f"Error in solve_update_answer: {e}")
+        print(traceback.format_exc())
+        return jsonify({
+            "error": str(e),
+            "error_type": "processing_error"
+        }), 500
+
+
+@app.route('/api/solve/session/<session_id>/note/<int:question_num>', methods=['PUT'])
+@require_auth
+def solve_add_note(session_id, question_num):
+    """
+    Add or update note for specific question.
+    
+    Request:
+        {
+            "note": "User note text"
+        }
+        
+    Response:
+        {
+            "success": true,
+            "message": "Note saved successfully"
+        }
+    """
+    try:
+        data = request.json
+        
+        if not data or 'note' not in data:
+            return jsonify({
+                "error": "Note text is required",
+                "error_type": "missing_parameter"
+            }), 400
+        
+        note = data['note']
+        
+        success = session_manager.add_note(session_id, question_num, note)
+        
+        if success:
+            return jsonify({
+                "success": True,
+                "message": f"Note for question {question_num} saved successfully"
+            }), 200
+        else:
+            return jsonify({
+                "error": "Failed to save note",
+                "error_type": "operation_failed"
+            }), 400
+            
+    except Exception as e:
+        print(f"Error in solve_add_note: {e}")
+        print(traceback.format_exc())
+        return jsonify({
+            "error": str(e),
+            "error_type": "processing_error"
+        }), 500
+
+
+@app.route('/api/solve/session/<session_id>/approve', methods=['POST'])
+@require_auth
+@require_admin
+def solve_approve_answer_key(session_id):
+    """
+    Approve and finalize answer key.
+    
+    Request:
+        {
+            "user_id": "admin_user"
+        }
+        
+    Response:
+        {
+            "success": true,
+            "message": "Answer key approved successfully"
+        }
+    """
+    try:
+        data = request.json or {}
+        user_id = data.get('user_id', 'unknown')
+        
+        # TODO: Add authentication and authorization checks
+        # For now, we'll accept any user_id
+        
+        # Get session to verify it exists and is completed
+        session = session_manager.get_session(session_id)
+        
+        if not session:
+            return jsonify({
+                "error": f"Session {session_id} not found",
+                "error_type": "not_found"
+            }), 404
+        
+        # Check if session is completed
+        if session.status != "completed":
+            return jsonify({
+                "error": f"Cannot approve session with status '{session.status}'. Session must be completed.",
+                "error_type": "invalid_status"
+            }), 400
+        
+        # Check if all flagged questions have been reviewed
+        if session.validation_report:
+            flagged_questions = session.validation_report.flagged_questions
+            # Check if any flagged questions don't have user corrections or notes
+            unreviewed = [
+                q for q in flagged_questions
+                if q not in session.user_corrections and q not in session.user_notes
+            ]
+            
+            if unreviewed:
+                return jsonify({
+                    "error": f"Cannot approve: {len(unreviewed)} flagged questions have not been reviewed",
+                    "error_type": "validation_required",
+                    "unreviewed_questions": unreviewed
+                }), 400
+        
+        # Approve the answer key
+        success = answer_key_generator.approve_answer_key(session_id, user_id)
+        
+        if success:
+            return jsonify({
+                "success": True,
+                "message": "Answer key approved successfully",
+                "approved_by": user_id
+            }), 200
+        else:
+            return jsonify({
+                "error": "Failed to approve answer key (may already be approved)",
+                "error_type": "operation_failed"
+            }), 400
+            
+    except Exception as e:
+        print(f"Error in solve_approve_answer_key: {e}")
+        print(traceback.format_exc())
+        return jsonify({
+            "error": str(e),
+            "error_type": "processing_error"
+        }), 500
+
+
+@app.route('/api/solve/session/<session_id>/export', methods=['GET'])
+@require_auth
+def solve_export_answer_key(session_id):
+    """
+    Export answer key in specified format.
+    
+    Query Parameters:
+        format: json|csv|pdf (default: json)
+        
+    Response:
+        - JSON: application/json
+        - CSV: text/csv
+        - PDF: application/pdf (currently text/plain)
+    """
+    try:
+        format_type = request.args.get('format', 'json').lower()
+        
+        # Get session
+        session = session_manager.get_session(session_id)
+        
+        if not session:
+            return jsonify({
+                "error": f"Session {session_id} not found",
+                "error_type": "not_found"
+            }), 404
+        
+        # Check if session has results
+        if not session.results:
+            return jsonify({
+                "error": "Session has no results to export",
+                "error_type": "no_results"
+            }), 400
+        
+        if format_type == 'json':
+            # Generate JSON answer key
+            answer_key_data = answer_key_generator.generate_json(session)
+            return jsonify(answer_key_data), 200
+            
+        elif format_type == 'csv':
+            # Generate CSV export
+            csv_content = answer_key_generator.generate_csv(session)
+            return csv_content, 200, {
+                'Content-Type': 'text/csv',
+                'Content-Disposition': f'attachment; filename=answer_key_{session_id}.csv'
+            }
+            
+        elif format_type == 'pdf':
+            # Generate PDF report
+            session_dir = os.path.join(session_manager.sessions_dir, session_id)
+            pdf_path = os.path.join(session_dir, 'answer_key_report.pdf')
+            
+            answer_key_generator.generate_pdf_report(session, pdf_path)
+            
+            # Read and return PDF content
+            with open(pdf_path, 'r', encoding='utf-8') as f:
+                pdf_content = f.read()
+            
+            return pdf_content, 200, {
+                'Content-Type': 'text/plain',  # TODO: Change to application/pdf when real PDF generation is implemented
+                'Content-Disposition': f'attachment; filename=answer_key_{session_id}.pdf'
+            }
+            
+        else:
+            return jsonify({
+                "error": f"Invalid format: {format_type}. Must be json, csv, or pdf",
+                "error_type": "invalid_parameter"
+            }), 400
+            
+    except Exception as e:
+        print(f"Error in solve_export_answer_key: {e}")
+        print(traceback.format_exc())
+        return jsonify({
+            "error": str(e),
+            "error_type": "processing_error"
+        }), 500
+
+
+@app.route('/api/solve/session/<session_id>/use-for-evaluation', methods=['POST'])
+@require_auth
+def solve_use_for_evaluation(session_id):
+    """
+    Use generated answer key directly for OMR evaluation.
+    
+    Response:
+        {
+            "success": true,
+            "answer_key": {...},
+            "message": "Answer key ready for OMR evaluation"
+        }
+    """
+    try:
+        # Get session
+        session = session_manager.get_session(session_id)
+        
+        if not session:
+            return jsonify({
+                "error": f"Session {session_id} not found",
+                "error_type": "not_found"
+            }), 404
+        
+        # Check if session has results
+        if not session.results:
+            return jsonify({
+                "error": "Session has no results",
+                "error_type": "no_results"
+            }), 400
+        
+        # Generate JSON answer key
+        answer_key_data = answer_key_generator.generate_json(session)
+        
+        # Extract just the answer_key portion (compatible with OMR evaluation)
+        answer_key = answer_key_data["answer_key"]
+        
+        return jsonify({
+            "success": True,
+            "answer_key": answer_key,
+            "metadata": answer_key_data["metadata"],
+            "message": "Answer key ready for OMR evaluation"
+        }), 200
+        
+    except Exception as e:
+        print(f"Error in solve_use_for_evaluation: {e}")
+        print(traceback.format_exc())
+        return jsonify({
+            "error": str(e),
+            "error_type": "processing_error"
+        }), 500
+
+
+# ---------------------------------------------------------------------------
+# Dashboard and Analytics Endpoints
+# ---------------------------------------------------------------------------
+
+@app.route('/api/solve/dashboard', methods=['GET'])
+@require_auth
+def solve_dashboard():
+    """
+    Get performance monitoring dashboard with solver statistics across all sessions.
+    
+    Response:
+        {
+            "overview": {
+                "total_sessions": int,
+                "total_questions": int,
+                "total_solved": int,
+                "total_unsolvable": int,
+                "total_errors": int,
+                "total_corrections": int,
+                "overall_accuracy": float,
+                "correction_rate": float
+            },
+            "accuracy_trends": [
+                {
+                    "date": "YYYY-MM-DD",
+                    "avg_confidence": float,
+                    "question_count": int
+                }
+            ],
+            "failure_patterns": [
+                {
+                    "pattern": str,
+                    "count": int
+                }
+            ],
+            "model_performance_by_type": {
+                "math": {
+                    "total": int,
+                    "solved": int,
+                    "avg_confidence": float,
+                    "avg_processing_time_ms": float
+                },
+                "logical": {...},
+                "factual": {...}
+            },
+            "generated_at": "ISO timestamp"
+        }
+    """
+    try:
+        api_logger.info("[API] Dashboard data requested")
+        
+        # Get dashboard data from analytics module
+        dashboard_data = dashboard_analytics.get_dashboard_data()
+        
+        api_logger.info(
+            f"[API] Dashboard data generated: "
+            f"{dashboard_data['overview']['total_sessions']} sessions, "
+            f"{dashboard_data['overview']['total_questions']} questions"
+        )
+        
+        return jsonify(dashboard_data), 200
+        
+    except Exception as e:
+        api_logger.error(f"[API] Error generating dashboard: {e}")
+        print(f"Error in solve_dashboard: {e}")
+        print(traceback.format_exc())
+        return jsonify({
+            "error": str(e),
+            "error_type": "processing_error",
+            "message": "Failed to generate dashboard data"
+        }), 500
+
+
+# ---------------------------------------------------------------------------
+# WebSocket Endpoints
+# ---------------------------------------------------------------------------
+
+# WebSocket endpoint for progress updates
+@socketio.on('subscribe_progress')
+def handle_subscribe_progress(data):
+    """
+    Subscribe to progress updates for a session.
+    
+    Data:
+        {
+            "session_id": "uuid"
+        }
+    """
+    session_id = data.get('session_id')
+    
+    if not session_id:
+        emit('error', {'error': 'session_id is required'})
+        return
+    
+    # Get session
+    session = session_manager.get_session(session_id)
+    
+    if not session:
+        emit('error', {'error': f'Session {session_id} not found'})
+        return
+    
+    # Send current progress
+    # Calculate progress metrics
+    elapsed_time = 0
+    estimated_remaining = 0
+    questions_per_minute = 0.0
+    
+    if session.start_time:
+        elapsed_time = time.time() - session.start_time
+        
+        if session.processed_count > 0 and elapsed_time > 0:
+            questions_per_minute = (session.processed_count / elapsed_time) * 60
+            
+            remaining_questions = session.total_questions - session.processed_count
+            if questions_per_minute > 0:
+                estimated_remaining = (remaining_questions / questions_per_minute) * 60
+    
+    # Calculate average confidence
+    average_confidence = 0.0
+    if session.results:
+        confidence_scores = [
+            r.confidence for r in session.results.values()
+            if r.status == "solved"
+        ]
+        if confidence_scores:
+            average_confidence = sum(confidence_scores) / len(confidence_scores)
+    
+    progress_message = {
+        "session_id": session_id,
+        "status": session.status,
+        "current_question": session.processed_count,
+        "total_questions": session.total_questions,
+        "processed_count": session.processed_count,
+        "solved_count": session.solved_count,
+        "unsolvable_count": session.unsolvable_count,
+        "error_count": session.error_count,
+        "elapsed_time_seconds": int(elapsed_time),
+        "estimated_remaining_seconds": int(estimated_remaining),
+        "average_confidence": round(average_confidence, 2),
+        "questions_per_minute": round(questions_per_minute, 2)
+    }
+    
+    emit('progress_update', progress_message)
 
 
 if __name__ == '__main__':

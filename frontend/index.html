@@ -132,6 +132,11 @@
                     <h3>Auto Eval <span class="badge">AI</span></h3>
                     <p>Automated grading with ML computer vision.</p>
                 </div>
+                <div class="mode-box ai-solver-mode" onclick="navigateTo('ai-solver-section')">
+                    <div class="mode-icon"><i class="fa-solid fa-brain"></i></div>
+                    <h3>AI Solver <span class="badge">NEW</span></h3>
+                    <p>Generate answer keys from question PDFs using AI.</p>
+                </div>
             </div>
 
             <!-- Hardware Control -->
@@ -186,6 +191,22 @@
                     </div>
                     <div id="qpFileInfoA" class="file-info"></div>
                     <div id="qpFileInfoB" class="file-info"></div>
+                    
+                    <!-- Expected Question Count Input -->
+                    <div style="margin-top: 12px;">
+                        <label style="font-size: 0.85rem; color: var(--text-main); display: block; margin-bottom: 4px;">
+                            Expected Number of Questions (Optional):
+                        </label>
+                        <input type="number" id="expectedQuestionCount" 
+                               placeholder="e.g., 100" 
+                               min="1" 
+                               max="500"
+                               style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-secondary); color: var(--text-main); font-size: 0.9rem;">
+                        <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">
+                            <i class="fa-solid fa-info-circle"></i> Helps validate extraction completeness
+                        </p>
+                    </div>
+                    
                     <div id="extractionLoader" class="loader-container hidden" style="margin-top: 10px;">
                         <div class="spinner" style="width: 20px; height: 20px; border-width: 2px;"></div>
                         <span style="font-size: 0.8rem; color: var(--accent);">AI Extracting...</span>
@@ -339,6 +360,289 @@
                 </div>
             </div>
         </section>
+
+        <!-- AI SOLVER SECTION -->
+        <section id="ai-solver-section" class="card hidden ai-solver-card">
+            <button class="back-btn" onclick="navigateTo('dashboard-section')"><i class="fa-solid fa-arrow-left"></i></button>
+            <h2>AI Question Solver</h2>
+            <p class="subtitle-small">Upload question bank PDF to generate answer keys automatically.</p>
+
+            <!-- Upload Area -->
+            <div id="aiSolverUploadArea" class="ai-solver-upload-area">
+                <div class="upload-box">
+                    <i class="fa-solid fa-file-pdf upload-icon"></i>
+                    <h4>Question Bank PDF</h4>
+                    <p>Upload PDF containing questions with multiple-choice options</p>
+                    <input type="file" id="aiSolverPdfInput" accept=".pdf" class="file-input">
+                    <button class="btn btn-sm btn-outline" onclick="document.getElementById('aiSolverPdfInput').click()">
+                        Choose PDF
+                    </button>
+                    <div id="aiSolverFileInfo" class="file-info"></div>
+                </div>
+                
+                <button class="btn btn-primary btn-full btn-glow mt-20" id="btnStartSolver" disabled>
+                    Start AI Solving <i class="fa-solid fa-brain"></i>
+                </button>
+            </div>
+
+            <!-- Classification Result -->
+            <div id="classificationResult" class="hidden classification-panel">
+                <h4><i class="fa-solid fa-file-circle-check"></i> Document Classification</h4>
+                <div id="classificationContent"></div>
+            </div>
+
+            <!-- Session Progress Area -->
+            <div id="solverProgressArea" class="hidden solver-progress-area">
+                <div class="progress-header">
+                    <h3>Solving in Progress</h3>
+                    <div class="session-controls">
+                        <button class="btn btn-sm btn-outline" id="btnPauseSolver" onclick="pauseSolverSession()">
+                            <i class="fa-solid fa-pause"></i> Pause
+                        </button>
+                        <button class="btn btn-sm btn-outline hidden" id="btnResumeSolver" onclick="resumeSolverSession()">
+                            <i class="fa-solid fa-play"></i> Resume
+                        </button>
+                        <button class="btn btn-sm btn-outline" id="btnCancelSolver" onclick="cancelSolverSession()" style="border-color: var(--danger); color: var(--danger);">
+                            <i class="fa-solid fa-xmark"></i> Cancel
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Progress Stats -->
+                <div class="progress-stats-grid">
+                    <div class="progress-stat-box">
+                        <span class="progress-stat-label">Current Question</span>
+                        <span class="progress-stat-value" id="currentQuestionNum">0</span>
+                    </div>
+                    <div class="progress-stat-box">
+                        <span class="progress-stat-label">Total Questions</span>
+                        <span class="progress-stat-value" id="totalQuestionsNum">0</span>
+                    </div>
+                    <div class="progress-stat-box">
+                        <span class="progress-stat-label">Elapsed Time</span>
+                        <span class="progress-stat-value" id="elapsedTime">0:00</span>
+                    </div>
+                    <div class="progress-stat-box">
+                        <span class="progress-stat-label">Est. Remaining</span>
+                        <span class="progress-stat-value" id="estimatedRemaining">--</span>
+                    </div>
+                    <div class="progress-stat-box">
+                        <span class="progress-stat-label">Questions/Min</span>
+                        <span class="progress-stat-value" id="questionsPerMin">0.0</span>
+                    </div>
+                    <div class="progress-stat-box">
+                        <span class="progress-stat-label">Avg Confidence</span>
+                        <span class="progress-stat-value" id="avgConfidence">0%</span>
+                    </div>
+                </div>
+
+                <!-- Progress Bar -->
+                <div class="progress-bar-container" style="max-width: 100%; height: 12px; margin-top: 20px;">
+                    <div id="solverProgressBar" class="progress-bar-fill"></div>
+                </div>
+                <p id="solverProgressText" style="text-align: center; margin-top: 10px; color: var(--text-muted); font-size: 0.9rem;"></p>
+            </div>
+
+            <!-- Review Area -->
+            <div id="solverReviewArea" class="hidden solver-review-area">
+                <div class="review-header">
+                    <h3>Review & Correct Answers</h3>
+                    <div class="review-controls">
+                        <select id="filterSelect" class="filter-select" onchange="filterQuestions()">
+                            <option value="all">All Questions</option>
+                            <option value="low-confidence">Low Confidence</option>
+                            <option value="flagged">Flagged</option>
+                            <option value="unsolvable">Unsolvable</option>
+                            <option value="corrected">Manually Corrected</option>
+                        </select>
+                        <select id="sortSelect" class="filter-select" onchange="sortQuestions()">
+                            <option value="number">Sort by Number</option>
+                            <option value="confidence">Sort by Confidence</option>
+                            <option value="type">Sort by Type</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Statistics Panel -->
+                <div class="solver-stats-panel">
+                    <div class="solver-stat-item">
+                        <span class="solver-stat-label">Total Questions</span>
+                        <span class="solver-stat-value" id="statTotalQuestions">0</span>
+                    </div>
+                    <div class="solver-stat-item">
+                        <span class="solver-stat-label">Solved</span>
+                        <span class="solver-stat-value" id="statSolved" style="color: var(--secondary);">0</span>
+                    </div>
+                    <div class="solver-stat-item">
+                        <span class="solver-stat-label">Unsolvable</span>
+                        <span class="solver-stat-value" id="statUnsolvable" style="color: var(--danger);">0</span>
+                    </div>
+                    <div class="solver-stat-item">
+                        <span class="solver-stat-label">Errors</span>
+                        <span class="solver-stat-value" id="statErrors" style="color: var(--danger);">0</span>
+                    </div>
+                    <div class="solver-stat-item">
+                        <span class="solver-stat-label">Reviewed</span>
+                        <span class="solver-stat-value" id="statReviewed">0</span>
+                    </div>
+                    <div class="solver-stat-item">
+                        <span class="solver-stat-label">Remaining</span>
+                        <span class="solver-stat-value" id="statRemaining">0</span>
+                    </div>
+                    <div class="solver-stat-item">
+                        <span class="solver-stat-label">Avg Confidence</span>
+                        <span class="solver-stat-value" id="statAvgConfidence">0%</span>
+                    </div>
+                </div>
+
+                <!-- Question Type Distribution Chart -->
+                <div class="question-type-chart-container">
+                    <h4 style="margin-bottom: 15px; color: var(--text-main);"><i class="fa-solid fa-chart-pie"></i> Question Type Distribution</h4>
+                    <canvas id="questionTypeChart"></canvas>
+                </div>
+
+                <!-- Question List -->
+                <div class="question-list-container">
+                    <div id="questionList" class="question-list"></div>
+                </div>
+
+                <!-- Approval & Export -->
+                <div class="approval-export-panel">
+                    <div style="display: flex; justify-content: space-between; align-items: center; gap: 15px; flex-wrap: wrap;">
+                        <button class="btn btn-primary" id="btnApproveAnswerKey" onclick="approveAnswerKey()" disabled>
+                            <i class="fa-solid fa-check-circle"></i> Approve Answer Key
+                        </button>
+                        <div class="export-buttons">
+                            <button class="btn btn-outline" onclick="exportAnswerKey('json')">
+                                <i class="fa-solid fa-file-code"></i> Export JSON
+                            </button>
+                            <button class="btn btn-outline" onclick="exportAnswerKey('csv')">
+                                <i class="fa-solid fa-file-csv"></i> Export CSV
+                            </button>
+                            <button class="btn btn-outline" onclick="exportAnswerKey('pdf')">
+                                <i class="fa-solid fa-file-pdf"></i> Export PDF
+                            </button>
+                            <button class="btn btn-outline" onclick="useForEvaluation()" style="border-color: var(--secondary); color: var(--secondary);">
+                                <i class="fa-solid fa-arrow-right"></i> Use for OMR Evaluation
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Error Display -->
+            <div id="solverError" class="hidden error-message"></div>
+            
+            <!-- Error Log Panel -->
+            <div id="errorLogPanel" class="hidden error-log-panel">
+                <div class="error-log-header">
+                    <h4><i class="fa-solid fa-list-check"></i> Error Log</h4>
+                    <button class="btn btn-sm btn-outline" onclick="toggleErrorLog()">
+                        <i class="fa-solid fa-eye"></i> <span id="errorLogToggleText">Show Details</span>
+                    </button>
+                </div>
+                
+                <div id="errorLogContent" class="error-log-content hidden">
+                    <div class="error-log-filters">
+                        <button class="error-filter-btn active" data-severity="all" onclick="filterErrors('all')">
+                            All
+                        </button>
+                        <button class="error-filter-btn" data-severity="critical" onclick="filterErrors('critical')">
+                            <i class="fa-solid fa-circle-exclamation"></i> Critical
+                        </button>
+                        <button class="error-filter-btn" data-severity="warning" onclick="filterErrors('warning')">
+                            <i class="fa-solid fa-triangle-exclamation"></i> Warning
+                        </button>
+                        <button class="error-filter-btn" data-severity="info" onclick="filterErrors('info')">
+                            <i class="fa-solid fa-circle-info"></i> Info
+                        </button>
+                    </div>
+                    
+                    <div id="errorLogList" class="error-log-list"></div>
+                </div>
+            </div>
+            
+            <!-- Service Status Panel -->
+            <div id="serviceStatusPanel" class="service-status-panel">
+                <div class="service-status-item">
+                    <span class="service-label">Backend API:</span>
+                    <span id="backendApiStatus" class="service-status checking">
+                        <i class="fa-solid fa-circle-notch fa-spin"></i> Checking...
+                    </span>
+                </div>
+                <div class="service-status-item">
+                    <span class="service-label">Ollama Service:</span>
+                    <span id="ollamaServiceStatus" class="service-status checking">
+                        <i class="fa-solid fa-circle-notch fa-spin"></i> Checking...
+                    </span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Question Detail Modal -->
+        <div id="questionDetailModal" class="modal hidden">
+            <div class="modal-content" style="max-width: 800px;">
+                <span class="close-btn" onclick="closeQuestionDetail()">&times;</span>
+                <h3 id="questionDetailTitle">Question Details</h3>
+                
+                <div class="question-detail-content">
+                    <div class="question-text-section">
+                        <h4>Question</h4>
+                        <p id="questionDetailText" class="question-text"></p>
+                        <div id="questionDetailImage" class="question-image-container hidden"></div>
+                    </div>
+
+                    <div class="question-options-section">
+                        <h4>Options</h4>
+                        <div id="questionDetailOptions" class="options-list"></div>
+                    </div>
+
+                    <div class="question-answer-section">
+                        <h4>AI Answer</h4>
+                        <div class="answer-display">
+                            <div class="answer-item">
+                                <span class="answer-label">Selected:</span>
+                                <span id="questionDetailAnswer" class="answer-value"></span>
+                            </div>
+                            <div class="answer-item">
+                                <span class="answer-label">Confidence:</span>
+                                <span id="questionDetailConfidence" class="answer-value"></span>
+                            </div>
+                        </div>
+                        <div class="explanation-box">
+                            <strong>Explanation:</strong>
+                            <p id="questionDetailExplanation"></p>
+                        </div>
+                    </div>
+
+                    <div class="question-correction-section">
+                        <h4>Correct Answer</h4>
+                        <div class="correction-controls">
+                            <select id="correctionSelect" class="correction-select">
+                                <option value="">-- Select Correct Answer --</option>
+                                <option value="A">A</option>
+                                <option value="B">B</option>
+                                <option value="C">C</option>
+                                <option value="D">D</option>
+                                <option value="E">E</option>
+                            </select>
+                            <button class="btn btn-primary" onclick="saveCorrection()">
+                                <i class="fa-solid fa-save"></i> Save Correction
+                            </button>
+                        </div>
+                        <div class="notes-section">
+                            <label>Notes:</label>
+                            <textarea id="questionNotes" class="notes-textarea" placeholder="Add notes about this question..."></textarea>
+                        </div>
+                    </div>
+
+                    <div id="validationIssues" class="validation-issues-section hidden">
+                        <h4><i class="fa-solid fa-triangle-exclamation"></i> Validation Issues</h4>
+                        <ul id="validationIssuesList"></ul>
+                    </div>
+                </div>
+            </div>
+        </div>
 
     </div>
 
@@ -656,6 +960,12 @@
 
             const formData = new FormData();
             formData.append('qp_file', file);
+            
+            // Add expected question count if provided
+            const expectedCount = document.getElementById('expectedQuestionCount').value;
+            if (expectedCount && parseInt(expectedCount) > 0) {
+                formData.append('expected_count', expectedCount);
+            }
 
             try {
                 const backendBase = `http://${window.location.hostname || '127.0.0.1'}:5000`;
@@ -681,7 +991,12 @@
                 // If only one key is uploaded, use it as fallback for UNKNOWN/other sets
                 if (!extractedKeys["UNKNOWN"]) extractedKeys["UNKNOWN"] = data.answer_key;
 
-                infoEl.innerHTML = `<span style="color:var(--secondary)">✓ Set ${setLabel}: ${data.count} answers extracted</span>`;
+                // Show extraction result with warnings if any
+                let resultText = `<span style="color:var(--secondary)">✓ Set ${setLabel}: ${data.count} answers extracted</span>`;
+                if (data.warnings && data.warnings.length > 0) {
+                    resultText += `<br><span style="color:var(--warning); font-size: 0.85rem;">⚠ ${data.warnings.join('; ')}</span>`;
+                }
+                infoEl.innerHTML = resultText;
                 console.log(`Extracted Key for Set ${setLabel}:`, data.answer_key);
                 
                 // Clear any previous errors on success
@@ -922,6 +1237,74 @@
         }
 
 
+        // --- CHART RENDERING ---
+        let gradeChart = null;  // Store chart instance for updates
+
+        function drawChart(labels, scores, backgroundColors) {
+            const ctx = document.getElementById('gradeChart');
+            if (!ctx) {
+                console.error('[Chart] Canvas element "gradeChart" not found');
+                return;
+            }
+
+            // Destroy existing chart if it exists
+            if (gradeChart) {
+                gradeChart.destroy();
+            }
+
+            // Create new chart
+            gradeChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Score (%)',
+                        data: scores,
+                        backgroundColor: backgroundColors,
+                        borderColor: backgroundColors.map(color => color.replace('0.6', '1')),
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: {
+                                callback: function(value) {
+                                    return value + '%';
+                                }
+                            },
+                            title: {
+                                display: true,
+                                text: 'Score Percentage'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Students'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return 'Score: ' + context.parsed.y + '%';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
 
         // --- MANUAL EVALUATION LOGIC ---
         let currentEditingStudentId = null;
@@ -1154,6 +1537,1818 @@
             } catch (e) {
                 alert("Failed to start simulation.");
             }
+        };
+
+        // --- AI SOLVER LOGIC ---
+        let currentSolverSessionId = null;
+        let solverWebSocket = null;
+        let progressPollingInterval = null;
+
+        // File upload handler
+        const aiSolverPdfInput = document.getElementById('aiSolverPdfInput');
+        const aiSolverFileInfo = document.getElementById('aiSolverFileInfo');
+        const btnStartSolver = document.getElementById('btnStartSolver');
+
+        aiSolverPdfInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                aiSolverFileInfo.innerHTML = `<span style="color: var(--secondary);"><i class="fa-solid fa-file-pdf"></i> ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)</span>`;
+                btnStartSolver.disabled = false;
+            } else {
+                aiSolverFileInfo.innerHTML = '';
+                btnStartSolver.disabled = true;
+            }
+        });
+
+        // Start solver session
+        btnStartSolver.addEventListener('click', async () => {
+            const file = aiSolverPdfInput.files[0];
+            if (!file) {
+                alert('Please select a PDF file first.');
+                return;
+            }
+
+            // Hide upload area, show progress
+            document.getElementById('aiSolverUploadArea').classList.add('hidden');
+            document.getElementById('solverProgressArea').classList.remove('hidden');
+            
+            // Initialize progress display
+            document.getElementById('currentQuestionNum').innerText = '0';
+            document.getElementById('totalQuestionsNum').innerText = '?';
+            document.getElementById('elapsedTime').innerText = '0:00';
+            document.getElementById('estimatedRemaining').innerText = '--';
+            document.getElementById('questionsPerMin').innerText = '0.0';
+            document.getElementById('avgConfidence').innerText = '0%';
+            document.getElementById('solverProgressBar').style.width = '0%';
+            document.getElementById('solverProgressText').innerText = 'Uploading PDF and analyzing document...';
+
+            const formData = new FormData();
+            formData.append('qp_file', file);
+
+            try {
+                const backendBase = `http://${window.location.hostname || '127.0.0.1'}:5000`;
+                const response = await fetch(`${backendBase}/api/solve/upload`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Upload failed');
+                }
+
+                // Store session ID
+                currentSolverSessionId = data.session_id;
+                
+                // Update progress text
+                document.getElementById('solverProgressText').innerText = 'Extracting questions from PDF...';
+                
+                // Connect to WebSocket for real-time progress updates
+                connectSolverWebSocket();
+
+            } catch (error) {
+                console.error('Upload error:', error);
+                document.getElementById('solverProgressArea').classList.add('hidden');
+                document.getElementById('solverError').classList.remove('hidden');
+                document.getElementById('solverError').innerHTML = `
+                    <div class="error-message">
+                        <div class="error-header">
+                            <i class="fa-solid fa-triangle-exclamation"></i>
+                            <span>Upload Failed</span>
+                        </div>
+                        <p style="color: var(--text-muted); margin-top: 10px;">${error.message}</p>
+                    </div>
+                    <button class="btn btn-outline btn-full" style="margin-top: 20px;" onclick="resetSolverUpload()">
+                        <i class="fa-solid fa-arrow-left"></i> Try Again
+                    </button>
+                `;
+            }
+        });
+
+        // WebSocket connection for real-time progress updates
+        function connectSolverWebSocket() {
+            if (solverWebSocket) {
+                solverWebSocket.close();
+            }
+            
+            // Disconnect any existing polling
+            stopProgressPolling();
+            
+            const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsHost = window.location.hostname || '127.0.0.1';
+            const wsUrl = `${wsProtocol}//${wsHost}:5000/socket.io/`;
+            
+            try {
+                // Connect to Socket.IO server
+                solverWebSocket = io(`http://${wsHost}:5000`, {
+                    transports: ['websocket', 'polling']
+                });
+                
+                solverWebSocket.on('connect', () => {
+                    console.log('WebSocket connected for solver progress');
+                    
+                    // Subscribe to progress updates for this session
+                    solverWebSocket.emit('subscribe_progress', {
+                        session_id: currentSolverSessionId
+                    });
+                });
+                
+                solverWebSocket.on('progress_update', (data) => {
+                    console.log('Progress update received:', data);
+                    updateProgressDisplay(data);
+                    
+                    // Update button states based on session status
+                    updateSessionControlButtons(data.status);
+                    
+                    // Check if completed or error
+                    if (data.status === 'completed') {
+                        disconnectSolverWebSocket();
+                        showCompletedState(data);
+                    } else if (data.status === 'error') {
+                        disconnectSolverWebSocket();
+                        showErrorState(data);
+                    } else if (data.status === 'cancelled') {
+                        disconnectSolverWebSocket();
+                        resetSolverUpload();
+                    }
+                });
+                
+                solverWebSocket.on('error', (error) => {
+                    console.error('WebSocket error:', error);
+                    // Fall back to polling if WebSocket fails
+                    console.log('Falling back to polling...');
+                    disconnectSolverWebSocket();
+                    startProgressPolling();
+                });
+                
+                solverWebSocket.on('disconnect', () => {
+                    console.log('WebSocket disconnected');
+                });
+                
+            } catch (error) {
+                console.error('Failed to connect WebSocket:', error);
+                // Fall back to polling
+                startProgressPolling();
+            }
+        }
+        
+        function disconnectSolverWebSocket() {
+            if (solverWebSocket) {
+                solverWebSocket.close();
+                solverWebSocket = null;
+            }
+        }
+
+        // Progress polling (fallback for when WebSocket is not available)
+        let progressPollingInterval = null;
+        
+        function startProgressPolling() {
+            if (progressPollingInterval) {
+                clearInterval(progressPollingInterval);
+            }
+            
+            // Poll every 2 seconds
+            progressPollingInterval = setInterval(pollSessionProgress, 2000);
+            
+            // Also poll immediately
+            pollSessionProgress();
+        }
+        
+        function stopProgressPolling() {
+            if (progressPollingInterval) {
+                clearInterval(progressPollingInterval);
+                progressPollingInterval = null;
+            }
+        }
+        
+        async function pollSessionProgress() {
+            if (!currentSolverSessionId) {
+                stopProgressPolling();
+                return;
+            }
+            
+            try {
+                const backendBase = `http://${window.location.hostname || '127.0.0.1'}:5000`;
+                const response = await fetch(`${backendBase}/api/solve/session/${currentSolverSessionId}`);
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.error || 'Failed to get session status');
+                }
+                
+                // Update progress display
+                updateProgressDisplay(data);
+                
+                // Update button states based on session status
+                updateSessionControlButtons(data.status);
+                
+                // Check if completed or error
+                if (data.status === 'completed') {
+                    stopProgressPolling();
+                    showCompletedState(data);
+                } else if (data.status === 'error') {
+                    stopProgressPolling();
+                    showErrorState(data);
+                } else if (data.status === 'cancelled') {
+                    stopProgressPolling();
+                    resetSolverUpload();
+                }
+                
+            } catch (error) {
+                console.error('Progress polling error:', error);
+                stopProgressPolling();
+                showErrorState({ error_message: error.message });
+            }
+        }
+        
+        function updateProgressDisplay(sessionData) {
+            // Update stats
+            document.getElementById('currentQuestionNum').innerText = sessionData.processed_count || sessionData.current_question || 0;
+            document.getElementById('totalQuestionsNum').innerText = sessionData.total_questions || 0;
+            
+            // Update elapsed time
+            if (sessionData.elapsed_time_seconds !== undefined) {
+                const minutes = Math.floor(sessionData.elapsed_time_seconds / 60);
+                const seconds = sessionData.elapsed_time_seconds % 60;
+                document.getElementById('elapsedTime').innerText = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            } else if (sessionData.start_time) {
+                // Fallback for polling data format
+                const elapsed = Date.now() / 1000 - sessionData.start_time;
+                const minutes = Math.floor(elapsed / 60);
+                const seconds = Math.floor(elapsed % 60);
+                document.getElementById('elapsedTime').innerText = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            }
+            
+            // Update estimated remaining time
+            if (sessionData.estimated_remaining_seconds !== undefined) {
+                const estMinutes = Math.floor(sessionData.estimated_remaining_seconds / 60);
+                const estSeconds = sessionData.estimated_remaining_seconds % 60;
+                document.getElementById('estimatedRemaining').innerText = `${estMinutes}:${estSeconds.toString().padStart(2, '0')}`;
+            } else if (sessionData.start_time && sessionData.processed_count > 0 && sessionData.total_questions > 0) {
+                // Fallback calculation for polling data format
+                const elapsed = Date.now() / 1000 - sessionData.start_time;
+                const remaining = sessionData.total_questions - sessionData.processed_count;
+                const avgTimePerQuestion = elapsed / sessionData.processed_count;
+                const estimatedSeconds = Math.ceil(remaining * avgTimePerQuestion);
+                const estMinutes = Math.floor(estimatedSeconds / 60);
+                const estSeconds = estimatedSeconds % 60;
+                document.getElementById('estimatedRemaining').innerText = `${estMinutes}:${estSeconds.toString().padStart(2, '0')}`;
+            }
+            
+            // Update questions per minute
+            if (sessionData.questions_per_minute !== undefined) {
+                document.getElementById('questionsPerMin').innerText = sessionData.questions_per_minute.toFixed(1);
+            } else if (sessionData.start_time && sessionData.processed_count > 0) {
+                // Fallback calculation for polling data format
+                const elapsed = Date.now() / 1000 - sessionData.start_time;
+                const questionsPerMin = (sessionData.processed_count / elapsed * 60).toFixed(1);
+                document.getElementById('questionsPerMin').innerText = questionsPerMin;
+            }
+            
+            // Average confidence
+            const avgConfidence = Math.round((sessionData.average_confidence || 0) * 100);
+            document.getElementById('avgConfidence').innerText = `${avgConfidence}%`;
+            
+            // Progress bar
+            if (sessionData.total_questions > 0) {
+                const progress = ((sessionData.processed_count || sessionData.current_question || 0) / sessionData.total_questions) * 100;
+                document.getElementById('solverProgressBar').style.width = `${progress}%`;
+            }
+            
+            // Progress text
+            if (sessionData.total_questions === 0) {
+                document.getElementById('solverProgressText').innerText = 'Extracting questions from PDF...';
+            } else {
+                const currentQ = sessionData.processed_count || sessionData.current_question || 0;
+                document.getElementById('solverProgressText').innerText = 
+                    `Processing question ${currentQ} of ${sessionData.total_questions}`;
+            }
+        }
+        
+        async function fetchSessionStatus() {
+            if (!currentSolverSessionId) return null;
+            
+            try {
+                const backendBase = `http://${window.location.hostname || '127.0.0.1'}:5000`;
+                const response = await fetch(`${backendBase}/api/solve/session/${currentSolverSessionId}`);
+                
+                if (!response.ok) {
+                    throw new Error('Failed to fetch session status');
+                }
+                
+                const data = await response.json();
+                
+                // Update current session data
+                if (data.status === 'completed') {
+                    showCompletedState(data);
+                } else if (data.status === 'error') {
+                    showErrorState(data);
+                } else {
+                    updateProgressDisplay(data);
+                }
+                
+                return data;
+            } catch (error) {
+                console.error('Failed to fetch session status:', error);
+                return null;
+            }
+        }
+        
+        function showCompletedState(sessionData) {
+            // Hide progress area, show review area
+            document.getElementById('solverProgressArea').classList.add('hidden');
+            document.getElementById('solverReviewArea').classList.remove('hidden');
+            
+            // Update statistics
+            updateSolverStatistics(sessionData);
+            
+            // Create question type distribution chart
+            createQuestionTypeChart(sessionData);
+            
+            // Render question list
+            renderQuestionList(sessionData);
+            
+            // Display error log if there are errors
+            displayErrorLog(sessionData);
+        }
+        
+        // Store current session data for filtering/sorting
+        let currentSessionData = null;
+        let questionTypeChartInstance = null;
+        
+        function createQuestionTypeChart(sessionData) {
+            // Destroy existing chart if it exists
+            if (questionTypeChartInstance) {
+                questionTypeChartInstance.destroy();
+            }
+            
+            // Count question types
+            const typeCounts = {
+                'math': 0,
+                'logical': 0,
+                'factual': 0,
+                'visual': 0,
+                'unknown': 0
+            };
+            
+            if (sessionData.questions && sessionData.questions.length > 0) {
+                sessionData.questions.forEach(question => {
+                    const type = question.question_type || 'unknown';
+                    if (typeCounts.hasOwnProperty(type)) {
+                        typeCounts[type]++;
+                    } else {
+                        typeCounts['unknown']++;
+                    }
+                });
+            }
+            
+            // Prepare chart data
+            const labels = [];
+            const data = [];
+            const backgroundColors = [];
+            const borderColors = [];
+            
+            const colorMap = {
+                'math': { bg: 'rgba(99, 102, 241, 0.6)', border: 'rgba(99, 102, 241, 1)' },
+                'logical': { bg: 'rgba(16, 185, 129, 0.6)', border: 'rgba(16, 185, 129, 1)' },
+                'factual': { bg: 'rgba(251, 191, 36, 0.6)', border: 'rgba(251, 191, 36, 1)' },
+                'visual': { bg: 'rgba(236, 72, 153, 0.6)', border: 'rgba(236, 72, 153, 1)' },
+                'unknown': { bg: 'rgba(156, 163, 175, 0.6)', border: 'rgba(156, 163, 175, 1)' }
+            };
+            
+            Object.entries(typeCounts).forEach(([type, count]) => {
+                if (count > 0) {
+                    labels.push(type.charAt(0).toUpperCase() + type.slice(1));
+                    data.push(count);
+                    backgroundColors.push(colorMap[type].bg);
+                    borderColors.push(colorMap[type].border);
+                }
+            });
+            
+            // Create chart
+            const ctx = document.getElementById('questionTypeChart').getContext('2d');
+            questionTypeChartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: backgroundColors,
+                        borderColor: borderColors,
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: '#e5e7eb',
+                                padding: 15,
+                                font: {
+                                    size: 12
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.parsed || 0;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = ((value / total) * 100).toFixed(1);
+                                    return `${label}: ${value} (${percentage}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function updateSolverStatistics(sessionData) {
+            // Update all statistics
+            const totalQuestions = sessionData.total_questions || 0;
+            const solvedCount = sessionData.solved_count || 0;
+            const unsolvableCount = sessionData.unsolvable_count || 0;
+            const errorCount = sessionData.error_count || 0;
+            
+            document.getElementById('statTotalQuestions').innerText = totalQuestions;
+            document.getElementById('statSolved').innerText = solvedCount;
+            document.getElementById('statUnsolvable').innerText = unsolvableCount;
+            document.getElementById('statErrors').innerText = errorCount;
+            
+            // Calculate reviewed count (questions with user corrections or notes)
+            const reviewedCount = Object.keys(sessionData.user_corrections || {}).length;
+            document.getElementById('statReviewed').innerText = reviewedCount;
+            
+            // Calculate remaining count (flagged questions that haven't been reviewed)
+            const flaggedQuestions = new Set(sessionData.validation_report?.flagged_questions || []);
+            const correctedQuestions = new Set(Object.keys(sessionData.user_corrections || {}).map(Number));
+            const remainingCount = [...flaggedQuestions].filter(q => !correctedQuestions.has(q)).length;
+            document.getElementById('statRemaining').innerText = remainingCount;
+            
+            const avgConfidence = Math.round((sessionData.average_confidence || 0) * 100);
+            document.getElementById('statAvgConfidence').innerText = `${avgConfidence}%`;
+            
+            // Update approve button state
+            updateApproveButtonState(sessionData);
+        }
+        
+        function updateApproveButtonState(sessionData) {
+            const btnApprove = document.getElementById('btnApproveAnswerKey');
+            if (!btnApprove) return;
+            
+            // Check if session is completed
+            if (sessionData.status !== 'completed') {
+                btnApprove.disabled = true;
+                btnApprove.title = 'Session must be completed before approval';
+                return;
+            }
+            
+            // Check if already approved
+            if (sessionData.metadata && sessionData.metadata.approved) {
+                btnApprove.disabled = true;
+                btnApprove.innerHTML = '<i class="fa-solid fa-check-circle"></i> Approved';
+                
+                // Display approval status if available
+                if (sessionData.metadata.approved_by && sessionData.metadata.approved_at) {
+                    displayApprovalStatus({
+                        approved_by: sessionData.metadata.approved_by,
+                        approved_at: sessionData.metadata.approved_at
+                    });
+                }
+                
+                // Disable editing
+                disableEditingAfterApproval();
+                return;
+            }
+            
+            // Check if all flagged questions have been reviewed
+            const flaggedQuestions = new Set(sessionData.validation_report?.flagged_questions || []);
+            const correctedQuestions = new Set(Object.keys(sessionData.user_corrections || {}).map(Number));
+            const unreviewedFlagged = [...flaggedQuestions].filter(q => !correctedQuestions.has(q));
+            
+            if (unreviewedFlagged.length > 0) {
+                btnApprove.disabled = true;
+                btnApprove.title = `${unreviewedFlagged.length} flagged question(s) need review before approval`;
+            } else {
+                btnApprove.disabled = false;
+                btnApprove.title = 'All flagged questions reviewed - ready to approve';
+            }
+        }
+        
+        function renderQuestionList(sessionData) {
+            currentSessionData = sessionData;
+            
+            // Update statistics when rendering question list
+            updateSolverStatistics(sessionData);
+            
+            const questionListContainer = document.getElementById('questionList');
+            questionListContainer.innerHTML = '';
+            
+            if (!sessionData.questions || sessionData.questions.length === 0) {
+                questionListContainer.innerHTML = '<p style="text-align: center; color: var(--text-muted); padding: 20px;">No questions to display.</p>';
+                return;
+            }
+            
+            // Get flagged questions from validation report
+            const flaggedQuestions = new Set(
+                sessionData.validation_report?.flagged_questions || []
+            );
+            
+            // Render each question
+            sessionData.questions.forEach(question => {
+                const result = sessionData.results?.[question.number];
+                if (!result) return; // Skip if no result yet
+                
+                const questionItem = createQuestionListItem(question, result, flaggedQuestions, sessionData);
+                questionListContainer.appendChild(questionItem);
+            });
+        }
+        
+        function createQuestionListItem(question, result, flaggedQuestions, sessionData) {
+            const item = document.createElement('div');
+            item.className = 'question-item';
+            
+            // Add special classes for flagged or low confidence
+            const isFlagged = flaggedQuestions.has(question.number);
+            const isLowConfidence = result.confidence < 0.6;
+            const isManuallyCorrected = sessionData.user_corrections?.[question.number] !== undefined;
+            
+            if (isFlagged) {
+                item.classList.add('flagged');
+            } else if (isLowConfidence) {
+                item.classList.add('low-confidence');
+            }
+            
+            // Get question type icon
+            const typeIcon = getQuestionTypeIcon(question.question_type);
+            
+            // Get confidence color
+            const confidenceColor = getConfidenceColor(result.confidence);
+            const confidencePercent = Math.round(result.confidence * 100);
+            
+            // Build status badges
+            let badges = '';
+            if (isManuallyCorrected) {
+                badges += '<span class="badge" style="background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); margin-left: 8px;"><i class="fa-solid fa-user-check"></i> Verified</span>';
+            }
+            if (isFlagged) {
+                badges += '<span class="badge" style="background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.4); margin-left: 8px;"><i class="fa-solid fa-flag"></i> Flagged</span>';
+            }
+            if (result.status === 'unsolvable') {
+                badges += '<span class="badge" style="background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.4); margin-left: 8px;"><i class="fa-solid fa-question-circle"></i> Unsolvable</span>';
+            }
+            if (result.status === 'error' || result.status === 'timeout') {
+                badges += '<span class="badge" style="background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.4); margin-left: 8px;"><i class="fa-solid fa-exclamation-triangle"></i> Error</span>';
+            }
+            
+            // Truncate question text for preview
+            const questionPreview = question.text.length > 100 
+                ? question.text.substring(0, 100) + '...' 
+                : question.text;
+            
+            item.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: start; gap: 15px;">
+                    <div style="flex: 1;">
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                            <span style="font-size: 1.5rem;">${typeIcon}</span>
+                            <strong style="font-size: 1.1rem; color: var(--text-main);">Question ${question.number}</strong>
+                            ${badges}
+                        </div>
+                        <p style="color: var(--text-muted); font-size: 0.9rem; margin: 0 0 10px 0; line-height: 1.5;">
+                            ${questionPreview}
+                        </p>
+                        <div style="display: flex; gap: 20px; font-size: 0.85rem;">
+                            <span style="color: var(--text-muted);">
+                                <i class="fa-solid fa-check-circle"></i> Answer: 
+                                <strong style="color: var(--text-main);">${result.selected_option || 'N/A'}</strong>
+                            </span>
+                            <span style="color: var(--text-muted);">
+                                <i class="fa-solid fa-file-lines"></i> Type: 
+                                <strong style="color: var(--text-main);">${question.question_type || 'unknown'}</strong>
+                            </span>
+                        </div>
+                    </div>
+                    <div style="text-align: center; min-width: 80px;">
+                        <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px;">
+                            Confidence
+                        </div>
+                        <div style="font-size: 1.5rem; font-weight: 700; color: ${confidenceColor};">
+                            ${confidencePercent}%
+                        </div>
+                        <div style="width: 60px; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; margin: 8px auto 0; overflow: hidden;">
+                            <div style="width: ${confidencePercent}%; height: 100%; background: ${confidenceColor}; transition: width 0.3s ease;"></div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Make item clickable to open detail view
+            item.style.cursor = 'pointer';
+            item.addEventListener('click', () => {
+                openQuestionDetail(question.number);
+            });
+            
+            return item;
+        }
+        
+        function getQuestionTypeIcon(type) {
+            const icons = {
+                'math': '🔢',
+                'mathematical': '🔢',
+                'logical': '🧩',
+                'factual': '📚',
+                'visual': '🖼️',
+                'unknown': '❓'
+            };
+            return icons[type?.toLowerCase()] || icons['unknown'];
+        }
+        
+        function getConfidenceColor(confidence) {
+            if (confidence >= 0.8) {
+                return '#34d399'; // Green - high confidence
+            } else if (confidence >= 0.6) {
+                return '#fbbf24'; // Yellow - medium confidence
+            } else {
+                return '#f87171'; // Red - low confidence
+            }
+        }
+        
+        function openQuestionDetail(questionNumber) {
+            if (!currentSessionData) return;
+            
+            // Find the question and result
+            const question = currentSessionData.questions.find(q => q.number === questionNumber);
+            const result = currentSessionData.results?.[questionNumber];
+            
+            if (!question || !result) {
+                console.error('Question or result not found:', questionNumber);
+                return;
+            }
+            
+            // Update modal title
+            document.getElementById('questionDetailTitle').textContent = `Question ${questionNumber} Details`;
+            
+            // Display question text
+            document.getElementById('questionDetailText').textContent = question.text;
+            
+            // Display question image if present
+            const imageContainer = document.getElementById('questionDetailImage');
+            if (question.has_image && question.image_data) {
+                imageContainer.classList.remove('hidden');
+                imageContainer.innerHTML = `<img src="data:image/png;base64,${question.image_data}" alt="Question ${questionNumber} Image">`;
+            } else {
+                imageContainer.classList.add('hidden');
+                imageContainer.innerHTML = '';
+            }
+            
+            // Display options
+            const optionsContainer = document.getElementById('questionDetailOptions');
+            optionsContainer.innerHTML = '';
+            
+            if (question.options && question.options.length > 0) {
+                question.options.forEach(option => {
+                    const optionItem = document.createElement('div');
+                    optionItem.className = 'option-item';
+                    
+                    // Highlight the selected answer
+                    if (option.label === result.selected_option) {
+                        optionItem.style.borderColor = 'var(--primary)';
+                        optionItem.style.background = 'rgba(59, 130, 246, 0.1)';
+                    }
+                    
+                    optionItem.innerHTML = `
+                        <div class="option-label">${option.label}</div>
+                        <div class="option-text">${option.text}</div>
+                    `;
+                    
+                    optionsContainer.appendChild(optionItem);
+                });
+            } else {
+                optionsContainer.innerHTML = '<p style="color: var(--text-muted);">No options available</p>';
+            }
+            
+            // Display AI answer
+            document.getElementById('questionDetailAnswer').textContent = result.selected_option || 'N/A';
+            
+            // Display confidence score
+            const confidencePercent = Math.round(result.confidence * 100);
+            const confidenceColor = getConfidenceColor(result.confidence);
+            document.getElementById('questionDetailConfidence').innerHTML = `
+                <span style="color: ${confidenceColor}; font-weight: 700;">${confidencePercent}%</span>
+            `;
+            
+            // Display explanation
+            document.getElementById('questionDetailExplanation').textContent = result.explanation || 'No explanation provided';
+            
+            // Set up correction select
+            const correctionSelect = document.getElementById('correctionSelect');
+            correctionSelect.value = currentSessionData.user_corrections?.[questionNumber] || '';
+            
+            // Populate correction select with available options
+            correctionSelect.innerHTML = '<option value="">-- Select Correct Answer --</option>';
+            if (question.options && question.options.length > 0) {
+                question.options.forEach(option => {
+                    const optionElement = document.createElement('option');
+                    optionElement.value = option.label;
+                    optionElement.textContent = option.label;
+                    correctionSelect.appendChild(optionElement);
+                });
+            }
+            
+            // Set current correction if exists
+            if (currentSessionData.user_corrections?.[questionNumber]) {
+                correctionSelect.value = currentSessionData.user_corrections[questionNumber];
+            }
+            
+            // Display notes
+            const notesTextarea = document.getElementById('questionNotes');
+            notesTextarea.value = currentSessionData.user_notes?.[questionNumber] || '';
+            
+            // Store current question number for save function
+            window.currentDetailQuestionNumber = questionNumber;
+            
+            // Display validation issues if any
+            const validationIssuesSection = document.getElementById('validationIssues');
+            const validationIssuesList = document.getElementById('validationIssuesList');
+            
+            // Get validation issues for this question
+            const questionIssues = currentSessionData.validation_report?.issues?.filter(
+                issue => issue.question_number === questionNumber
+            ) || [];
+            
+            if (questionIssues.length > 0) {
+                validationIssuesSection.classList.remove('hidden');
+                validationIssuesList.innerHTML = '';
+                
+                questionIssues.forEach(issue => {
+                    const li = document.createElement('li');
+                    const severityIcon = issue.severity === 'critical' 
+                        ? '<i class="fa-solid fa-circle-exclamation" style="color: var(--danger);"></i>'
+                        : issue.severity === 'warning'
+                        ? '<i class="fa-solid fa-triangle-exclamation" style="color: var(--warning);"></i>'
+                        : '<i class="fa-solid fa-circle-info" style="color: var(--info);"></i>';
+                    
+                    li.innerHTML = `
+                        ${severityIcon}
+                        <strong style="text-transform: uppercase; font-size: 0.8rem; color: var(--text-muted);">${issue.severity}:</strong>
+                        ${issue.description}
+                    `;
+                    validationIssuesList.appendChild(li);
+                });
+            } else {
+                validationIssuesSection.classList.add('hidden');
+            }
+            
+            // Show modal
+            document.getElementById('questionDetailModal').classList.remove('hidden');
+            document.getElementById('questionDetailModal').classList.add('active');
+        }
+        
+        function showErrorState(sessionData) {
+            document.getElementById('solverProgressArea').classList.add('hidden');
+            document.getElementById('solverError').classList.remove('hidden');
+            document.getElementById('solverError').innerHTML = `
+                <div class="error-message">
+                    <div class="error-header">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                        <span>Processing Error</span>
+                    </div>
+                    <p style="color: var(--text-muted); margin-top: 10px;">
+                        ${sessionData.error_message || 'An error occurred during processing'}
+                    </p>
+                </div>
+                <button class="btn btn-outline btn-full" style="margin-top: 20px;" onclick="resetSolverUpload()">
+                    <i class="fa-solid fa-arrow-left"></i> Try Again
+                </button>
+            `;
+        }
+
+        // Session control functions
+        window.pauseSolverSession = async function() {
+            if (!currentSolverSessionId) return;
+            
+            const btnPause = document.getElementById('btnPauseSolver');
+            const btnResume = document.getElementById('btnResumeSolver');
+            const btnCancel = document.getElementById('btnCancelSolver');
+            
+            // Disable all buttons during operation
+            btnPause.disabled = true;
+            btnCancel.disabled = true;
+            const originalText = btnPause.innerHTML;
+            btnPause.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Pausing...';
+            
+            try {
+                const backendBase = `http://${window.location.hostname || '127.0.0.1'}:5000`;
+                const response = await fetch(`${backendBase}/api/solve/session/${currentSolverSessionId}/pause`, {
+                    method: 'POST'
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    // Update button states
+                    btnPause.classList.add('hidden');
+                    btnResume.classList.remove('hidden');
+                    btnCancel.disabled = false;
+                    
+                    // Stop progress updates
+                    stopProgressPolling();
+                    disconnectSolverWebSocket();
+                    
+                    // Show success message
+                    showSolverMessage('Session paused successfully. You can resume anytime.', 'info');
+                } else {
+                    throw new Error(data.error || 'Failed to pause session');
+                }
+            } catch (error) {
+                console.error('Pause error:', error);
+                showSolverMessage(`Failed to pause session: ${error.message}`, 'error');
+                
+                // Restore button state
+                btnPause.innerHTML = originalText;
+                btnPause.disabled = false;
+                btnCancel.disabled = false;
+            }
+        };
+        
+        window.resumeSolverSession = async function() {
+            if (!currentSolverSessionId) return;
+            
+            const btnPause = document.getElementById('btnPauseSolver');
+            const btnResume = document.getElementById('btnResumeSolver');
+            const btnCancel = document.getElementById('btnCancelSolver');
+            
+            // Disable all buttons during operation
+            btnResume.disabled = true;
+            btnCancel.disabled = true;
+            const originalText = btnResume.innerHTML;
+            btnResume.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Resuming...';
+            
+            try {
+                const backendBase = `http://${window.location.hostname || '127.0.0.1'}:5000`;
+                const response = await fetch(`${backendBase}/api/solve/session/${currentSolverSessionId}/resume`, {
+                    method: 'POST'
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    // Update button states
+                    btnResume.classList.add('hidden');
+                    btnPause.classList.remove('hidden');
+                    btnPause.disabled = false;
+                    btnCancel.disabled = false;
+                    
+                    // Reconnect progress updates
+                    connectSolverWebSocket();
+                    
+                    // Show success message
+                    showSolverMessage('Session resumed. Processing continues...', 'info');
+                } else {
+                    throw new Error(data.error || 'Failed to resume session');
+                }
+            } catch (error) {
+                console.error('Resume error:', error);
+                showSolverMessage(`Failed to resume session: ${error.message}`, 'error');
+                
+                // Restore button state
+                btnResume.innerHTML = originalText;
+                btnResume.disabled = false;
+                btnCancel.disabled = false;
+            }
+        };
+        
+        window.cancelSolverSession = async function() {
+            if (!currentSolverSessionId) return;
+            
+            // Show custom confirmation dialog
+            const confirmed = await showCancelConfirmation();
+            if (!confirmed) {
+                return;
+            }
+            
+            const btnPause = document.getElementById('btnPauseSolver');
+            const btnResume = document.getElementById('btnResumeSolver');
+            const btnCancel = document.getElementById('btnCancelSolver');
+            
+            // Disable all buttons during operation
+            btnPause.disabled = true;
+            btnResume.disabled = true;
+            btnCancel.disabled = true;
+            const originalText = btnCancel.innerHTML;
+            btnCancel.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Cancelling...';
+            
+            try {
+                const backendBase = `http://${window.location.hostname || '127.0.0.1'}:5000`;
+                const response = await fetch(`${backendBase}/api/solve/session/${currentSolverSessionId}/cancel`, {
+                    method: 'POST'
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    // Stop all progress tracking
+                    stopProgressPolling();
+                    disconnectSolverWebSocket();
+                    
+                    // Show success message
+                    showSolverMessage('Session cancelled. All progress has been discarded.', 'info');
+                    
+                    // Reset UI after a short delay
+                    setTimeout(() => {
+                        resetSolverUpload();
+                    }, 2000);
+                } else {
+                    throw new Error(data.error || 'Failed to cancel session');
+                }
+            } catch (error) {
+                console.error('Cancel error:', error);
+                showSolverMessage(`Failed to cancel session: ${error.message}`, 'error');
+                
+                // Restore button state
+                btnCancel.innerHTML = originalText;
+                btnPause.disabled = false;
+                btnResume.disabled = false;
+                btnCancel.disabled = false;
+            }
+        };
+        
+        // Show cancel confirmation dialog
+        function showCancelConfirmation() {
+            return new Promise((resolve) => {
+                const modal = document.createElement('div');
+                modal.className = 'modal active';
+                modal.style.zIndex = '2000';
+                modal.innerHTML = `
+                    <div class="modal-content" style="max-width: 500px;">
+                        <h3 style="color: var(--danger); margin-bottom: 15px;">
+                            <i class="fa-solid fa-triangle-exclamation"></i> Cancel Session?
+                        </h3>
+                        <p style="color: var(--text-main); margin-bottom: 20px; line-height: 1.6;">
+                            Are you sure you want to cancel this solver session? 
+                            <strong>All progress will be permanently lost</strong> and cannot be recovered.
+                        </p>
+                        <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                            <button class="btn btn-outline" id="cancelNo">
+                                <i class="fa-solid fa-arrow-left"></i> Go Back
+                            </button>
+                            <button class="btn btn-primary" id="cancelYes" style="background: var(--danger); border-color: var(--danger);">
+                                <i class="fa-solid fa-xmark"></i> Yes, Cancel Session
+                            </button>
+                        </div>
+                    </div>
+                `;
+                
+                document.body.appendChild(modal);
+                
+                document.getElementById('cancelNo').onclick = () => {
+                    document.body.removeChild(modal);
+                    resolve(false);
+                };
+                
+                document.getElementById('cancelYes').onclick = () => {
+                    document.body.removeChild(modal);
+                    resolve(true);
+                };
+                
+                // Close on background click
+                modal.onclick = (e) => {
+                    if (e.target === modal) {
+                        document.body.removeChild(modal);
+                        resolve(false);
+                    }
+                };
+            });
+        }
+        
+        // Show solver message (info, error, success)
+        function showSolverMessage(message, type = 'info') {
+            const errorDiv = document.getElementById('solverError');
+            errorDiv.classList.remove('hidden');
+            
+            let icon = 'fa-info-circle';
+            let color = 'var(--primary)';
+            
+            if (type === 'error') {
+                icon = 'fa-triangle-exclamation';
+                color = 'var(--danger)';
+            } else if (type === 'success') {
+                icon = 'fa-check-circle';
+                color = 'var(--secondary)';
+            }
+            
+            errorDiv.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 10px; color: ${color};">
+                    <i class="fa-solid ${icon}" style="font-size: 1.2rem;"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+            
+            // Auto-hide info messages after 5 seconds
+            if (type === 'info' || type === 'success') {
+                setTimeout(() => {
+                    errorDiv.classList.add('hidden');
+                }, 5000);
+            }
+        }
+        
+        // Error log management
+        window.toggleErrorLog = function() {
+            const content = document.getElementById('errorLogContent');
+            const toggleText = document.getElementById('errorLogToggleText');
+            
+            if (content.classList.contains('hidden')) {
+                content.classList.remove('hidden');
+                toggleText.textContent = 'Hide Details';
+            } else {
+                content.classList.add('hidden');
+                toggleText.textContent = 'Show Details';
+            }
+        };
+        
+        window.filterErrors = function(severity) {
+            const buttons = document.querySelectorAll('.error-filter-btn');
+            buttons.forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.dataset.severity === severity) {
+                    btn.classList.add('active');
+                }
+            });
+            
+            const errorItems = document.querySelectorAll('.error-log-item');
+            errorItems.forEach(item => {
+                if (severity === 'all' || item.dataset.severity === severity) {
+                    item.style.display = 'flex';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        };
+        
+        function displayErrorLog(sessionData) {
+            const errorLogPanel = document.getElementById('errorLogPanel');
+            const errorLogList = document.getElementById('errorLogList');
+            
+            if (!sessionData.error_log || sessionData.error_log.length === 0) {
+                errorLogPanel.classList.add('hidden');
+                return;
+            }
+            
+            errorLogPanel.classList.remove('hidden');
+            errorLogList.innerHTML = '';
+            
+            sessionData.error_log.forEach(error => {
+                const errorItem = document.createElement('div');
+                errorItem.className = 'error-log-item';
+                errorItem.dataset.severity = error.severity || 'info';
+                
+                const severityIcon = {
+                    'critical': 'fa-circle-exclamation',
+                    'warning': 'fa-triangle-exclamation',
+                    'info': 'fa-circle-info'
+                }[error.severity] || 'fa-circle-info';
+                
+                const severityColor = {
+                    'critical': 'var(--danger)',
+                    'warning': 'var(--warning)',
+                    'info': 'var(--primary)'
+                }[error.severity] || 'var(--primary)';
+                
+                errorItem.innerHTML = `
+                    <div class="error-log-icon" style="color: ${severityColor};">
+                        <i class="fa-solid ${severityIcon}"></i>
+                    </div>
+                    <div class="error-log-details">
+                        <div class="error-log-message">${error.message}</div>
+                        ${error.question_number ? `<div class="error-log-question">Question ${error.question_number}</div>` : ''}
+                        ${error.timestamp ? `<div class="error-log-timestamp">${new Date(error.timestamp).toLocaleString()}</div>` : ''}
+                        ${error.question_number && error.retryable ? `
+                            <button class="btn btn-sm btn-outline" onclick="retryQuestion(${error.question_number})" style="margin-top: 8px;">
+                                <i class="fa-solid fa-rotate-right"></i> Retry
+                            </button>
+                        ` : ''}
+                    </div>
+                `;
+                
+                errorLogList.appendChild(errorItem);
+            });
+        }
+        
+        window.retryQuestion = async function(questionNumber) {
+            if (!currentSolverSessionId) {
+                console.error('No session selected');
+                return;
+            }
+            
+            try {
+                const backendBase = `http://${window.location.hostname || '127.0.0.1'}:5000`;
+                
+                showSolverMessage(`Retrying question ${questionNumber}...`, 'info');
+                
+                const response = await fetch(
+                    `${backendBase}/api/solve/session/${currentSolverSessionId}/retry/${questionNumber}`,
+                    {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' }
+                    }
+                );
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Failed to retry question');
+                }
+                
+                const data = await response.json();
+                
+                showSolverMessage(`Question ${questionNumber} retry ${data.success ? 'successful' : 'failed'}`, 
+                    data.success ? 'success' : 'error');
+                
+                // Refresh session data
+                await fetchSessionStatus();
+                
+                if (currentSessionData) {
+                    renderQuestionList(currentSessionData);
+                    displayErrorLog(currentSessionData);
+                }
+                
+            } catch (error) {
+                console.error('Retry error:', error);
+                showSolverMessage(`Failed to retry question: ${error.message}`, 'error');
+            }
+        };
+        
+        // Service availability checking
+        async function checkServiceAvailability() {
+            const backendBase = `http://${window.location.hostname || '127.0.0.1'}:5000`;
+            
+            // Check backend API
+            try {
+                const backendResponse = await fetch(`${backendBase}/api/health`, { 
+                    signal: AbortSignal.timeout(3000) 
+                });
+                
+                const backendStatus = document.getElementById('backendApiStatus');
+                if (backendResponse.ok) {
+                    backendStatus.innerHTML = '<i class="fa-solid fa-circle-check"></i> Online';
+                    backendStatus.className = 'service-status online';
+                } else {
+                    backendStatus.innerHTML = '<i class="fa-solid fa-circle-xmark"></i> Error';
+                    backendStatus.className = 'service-status offline';
+                }
+            } catch (error) {
+                const backendStatus = document.getElementById('backendApiStatus');
+                backendStatus.innerHTML = '<i class="fa-solid fa-circle-xmark"></i> Offline';
+                backendStatus.className = 'service-status offline';
+            }
+            
+            // Check Ollama service
+            try {
+                const ollamaResponse = await fetch(`${backendBase}/api/solve/health`, { 
+                    signal: AbortSignal.timeout(3000) 
+                });
+                
+                const ollamaStatus = document.getElementById('ollamaServiceStatus');
+                if (ollamaResponse.ok) {
+                    const data = await ollamaResponse.json();
+                    if (data.ollama_available) {
+                        ollamaStatus.innerHTML = '<i class="fa-solid fa-circle-check"></i> Online';
+                        ollamaStatus.className = 'service-status online';
+                    } else {
+                        ollamaStatus.innerHTML = '<i class="fa-solid fa-circle-xmark"></i> Unavailable';
+                        ollamaStatus.className = 'service-status offline';
+                    }
+                } else {
+                    ollamaStatus.innerHTML = '<i class="fa-solid fa-circle-xmark"></i> Error';
+                    ollamaStatus.className = 'service-status offline';
+                }
+            } catch (error) {
+                const ollamaStatus = document.getElementById('ollamaServiceStatus');
+                ollamaStatus.innerHTML = '<i class="fa-solid fa-circle-xmark"></i> Offline';
+                ollamaStatus.className = 'service-status offline';
+            }
+        }
+        
+        // Check service availability when entering AI solver section
+        const aiSolverSection = document.getElementById('ai-solver-section');
+        if (aiSolverSection) {
+            const observer = new MutationObserver((mutations) => {
+                mutations.forEach((mutation) => {
+                    if (mutation.target.classList.contains('active') && 
+                        !mutation.target.classList.contains('hidden')) {
+                        checkServiceAvailability();
+                    }
+                });
+            });
+            
+            observer.observe(aiSolverSection, { 
+                attributes: true, 
+                attributeFilter: ['class'] 
+            });
+        }
+        
+        // Update button states based on session status
+        function updateSessionControlButtons(status) {
+            const btnPause = document.getElementById('btnPauseSolver');
+            const btnResume = document.getElementById('btnResumeSolver');
+            const btnCancel = document.getElementById('btnCancelSolver');
+            
+            // Reset all buttons
+            btnPause.disabled = false;
+            btnResume.disabled = false;
+            btnCancel.disabled = false;
+            
+            switch (status) {
+                case 'processing':
+                    btnPause.classList.remove('hidden');
+                    btnResume.classList.add('hidden');
+                    btnCancel.disabled = false;
+                    break;
+                    
+                case 'paused':
+                    btnPause.classList.add('hidden');
+                    btnResume.classList.remove('hidden');
+                    btnCancel.disabled = false;
+                    break;
+                    
+                case 'completed':
+                case 'cancelled':
+                case 'error':
+                    btnPause.classList.add('hidden');
+                    btnResume.classList.add('hidden');
+                    btnCancel.classList.add('hidden');
+                    break;
+                    
+                default:
+                    btnPause.classList.remove('hidden');
+                    btnResume.classList.add('hidden');
+                    btnCancel.disabled = false;
+            }
+        }
+
+        // Reset solver upload
+        window.resetSolverUpload = function() {
+            stopProgressPolling();
+            disconnectSolverWebSocket();
+            currentSolverSessionId = null;
+            aiSolverPdfInput.value = '';
+            aiSolverFileInfo.innerHTML = '';
+            btnStartSolver.disabled = true;
+            document.getElementById('aiSolverUploadArea').classList.remove('hidden');
+            document.getElementById('solverProgressArea').classList.add('hidden');
+            document.getElementById('solverReviewArea').classList.add('hidden');
+            document.getElementById('solverError').classList.add('hidden');
+            document.getElementById('solverError').innerHTML = '';
+            
+            // Reset button states
+            document.getElementById('btnPauseSolver').classList.remove('hidden');
+            document.getElementById('btnResumeSolver').classList.add('hidden');
+        };
+
+        // Placeholder functions for review interface (will be implemented in later tasks)
+        window.filterQuestions = function() {
+            if (!currentSessionData) return;
+            
+            const filterValue = document.getElementById('filterSelect').value;
+            const questionListContainer = document.getElementById('questionList');
+            const items = questionListContainer.querySelectorAll('.question-item');
+            
+            items.forEach(item => {
+                const questionNumber = parseInt(item.textContent.match(/Question (\d+)/)[1]);
+                const result = currentSessionData.results?.[questionNumber];
+                const isFlagged = item.classList.contains('flagged');
+                const isLowConfidence = item.classList.contains('low-confidence');
+                const isCorrected = currentSessionData.user_corrections?.[questionNumber] !== undefined;
+                const isUnsolvable = result?.status === 'unsolvable';
+                
+                let shouldShow = true;
+                
+                switch(filterValue) {
+                    case 'low-confidence':
+                        shouldShow = isLowConfidence;
+                        break;
+                    case 'flagged':
+                        shouldShow = isFlagged;
+                        break;
+                    case 'unsolvable':
+                        shouldShow = isUnsolvable;
+                        break;
+                    case 'corrected':
+                        shouldShow = isCorrected;
+                        break;
+                    case 'all':
+                    default:
+                        shouldShow = true;
+                }
+                
+                item.style.display = shouldShow ? 'block' : 'none';
+            });
+        };
+        
+        window.sortQuestions = function() {
+            if (!currentSessionData) return;
+            
+            const sortValue = document.getElementById('sortSelect').value;
+            const questionListContainer = document.getElementById('questionList');
+            const items = Array.from(questionListContainer.querySelectorAll('.question-item'));
+            
+            items.sort((a, b) => {
+                const aNum = parseInt(a.textContent.match(/Question (\d+)/)[1]);
+                const bNum = parseInt(b.textContent.match(/Question (\d+)/)[1]);
+                const aResult = currentSessionData.results?.[aNum];
+                const bResult = currentSessionData.results?.[bNum];
+                
+                switch(sortValue) {
+                    case 'confidence':
+                        return (aResult?.confidence || 0) - (bResult?.confidence || 0);
+                    case 'type':
+                        const aType = currentSessionData.questions.find(q => q.number === aNum)?.question_type || '';
+                        const bType = currentSessionData.questions.find(q => q.number === bNum)?.question_type || '';
+                        return aType.localeCompare(bType);
+                    case 'number':
+                    default:
+                        return aNum - bNum;
+                }
+            });
+            
+            // Re-append items in sorted order
+            items.forEach(item => questionListContainer.appendChild(item));
+        };
+        
+        window.approveAnswerKey = async function() {
+            if (!currentSolverSessionId) {
+                console.error('No session selected');
+                return;
+            }
+            
+            try {
+                // Fetch current session status
+                const backendBase = `http://${window.location.hostname || '127.0.0.1'}:5000`;
+                const sessionResponse = await fetch(`${backendBase}/api/solve/session/${currentSolverSessionId}`);
+                
+                if (!sessionResponse.ok) {
+                    throw new Error('Failed to fetch session status');
+                }
+                
+                const sessionData = await sessionResponse.json();
+                
+                // Check if all flagged questions have been reviewed
+                const flaggedQuestions = [];
+                if (sessionData.validation_report && sessionData.validation_report.flagged_questions) {
+                    flaggedQuestions.push(...sessionData.validation_report.flagged_questions);
+                }
+                
+                // Check if any flagged questions haven't been corrected or reviewed
+                const unreviewedFlagged = flaggedQuestions.filter(qNum => {
+                    return !sessionData.user_corrections || !sessionData.user_corrections[qNum];
+                });
+                
+                if (unreviewedFlagged.length > 0) {
+                    alert(`Cannot approve: ${unreviewedFlagged.length} flagged question(s) still need review. Please review all flagged questions before approval.`);
+                    return;
+                }
+                
+                // Show confirmation dialog with summary statistics
+                const totalQuestions = sessionData.total_questions || 0;
+                const solvedCount = sessionData.solved_count || 0;
+                const unsolvableCount = sessionData.unsolvable_count || 0;
+                const errorCount = sessionData.error_count || 0;
+                const manualCorrections = sessionData.user_corrections ? Object.keys(sessionData.user_corrections).length : 0;
+                const avgConfidence = sessionData.validation_report ? 
+                    (sessionData.validation_report.average_confidence * 100).toFixed(1) : '0.0';
+                
+                const confirmMessage = `
+Are you sure you want to approve this answer key?
+
+Summary Statistics:
+• Total Questions: ${totalQuestions}
+• Solved: ${solvedCount}
+• Unsolvable: ${unsolvableCount}
+• Errors: ${errorCount}
+• Manual Corrections: ${manualCorrections}
+• Average Confidence: ${avgConfidence}%
+
+Once approved, the answer key will be marked as immutable and cannot be edited.
+                `.trim();
+                
+                if (!confirm(confirmMessage)) {
+                    return;
+                }
+                
+                // Get user ID (from auth or use 'admin' as default)
+                const userId = 'admin'; // TODO: Get from actual auth system
+                
+                // Send approval request
+                const approvalResponse = await fetch(
+                    `${backendBase}/api/solve/session/${currentSolverSessionId}/approve`,
+                    {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ user_id: userId })
+                    }
+                );
+                
+                if (!approvalResponse.ok) {
+                    const errorData = await approvalResponse.json();
+                    throw new Error(errorData.error || 'Failed to approve answer key');
+                }
+                
+                const approvalData = await approvalResponse.json();
+                
+                // Show success message
+                showSolverMessage('Answer key approved successfully!', 'success');
+                
+                // Refresh session data to show approval status
+                await fetchSessionStatus();
+                
+                // Update UI to show approval status
+                displayApprovalStatus(approvalData);
+                
+                // Disable the approve button
+                const btnApprove = document.getElementById('btnApproveAnswerKey');
+                if (btnApprove) {
+                    btnApprove.disabled = true;
+                    btnApprove.innerHTML = '<i class="fa-solid fa-check-circle"></i> Approved';
+                }
+                
+                // Disable editing controls
+                disableEditingAfterApproval();
+                
+            } catch (error) {
+                console.error('Approval error:', error);
+                alert(`Failed to approve answer key: ${error.message}`);
+            }
+        };
+        
+        function displayApprovalStatus(approvalData) {
+            // Create or update approval status display
+            let statusDiv = document.getElementById('approvalStatusDisplay');
+            
+            if (!statusDiv) {
+                statusDiv = document.createElement('div');
+                statusDiv.id = 'approvalStatusDisplay';
+                statusDiv.className = 'approval-status-panel';
+                
+                // Insert before the approval button
+                const approvalPanel = document.querySelector('.approval-export-panel');
+                if (approvalPanel) {
+                    approvalPanel.insertBefore(statusDiv, approvalPanel.firstChild);
+                }
+            }
+            
+            const approvedBy = approvalData.approved_by || 'Unknown';
+            const approvedAt = approvalData.approved_at || new Date().toISOString();
+            const formattedDate = new Date(approvedAt).toLocaleString();
+            
+            statusDiv.innerHTML = `
+                <div class="approval-status-content">
+                    <div class="approval-status-icon">
+                        <i class="fa-solid fa-check-circle" style="color: var(--secondary); font-size: 2rem;"></i>
+                    </div>
+                    <div class="approval-status-info">
+                        <h4 style="margin: 0 0 8px 0; color: var(--secondary);">
+                            <i class="fa-solid fa-shield-check"></i> Answer Key Approved
+                        </h4>
+                        <p style="margin: 4px 0; color: var(--text-muted); font-size: 0.9rem;">
+                            <strong>Approved by:</strong> ${approvedBy}
+                        </p>
+                        <p style="margin: 4px 0; color: var(--text-muted); font-size: 0.9rem;">
+                            <strong>Approved at:</strong> ${formattedDate}
+                        </p>
+                        <p style="margin: 8px 0 0 0; color: var(--warning); font-size: 0.85rem;">
+                            <i class="fa-solid fa-lock"></i> This answer key is now immutable and cannot be edited.
+                        </p>
+                    </div>
+                </div>
+            `;
+            
+            statusDiv.style.display = 'block';
+        }
+        
+        function disableEditingAfterApproval() {
+            // Disable all correction controls in the question detail modal
+            const correctionSelect = document.getElementById('correctionSelect');
+            const notesTextarea = document.getElementById('questionNotes');
+            const saveButton = document.querySelector('.question-correction-section .btn-primary');
+            
+            if (correctionSelect) correctionSelect.disabled = true;
+            if (notesTextarea) notesTextarea.disabled = true;
+            if (saveButton) {
+                saveButton.disabled = true;
+                saveButton.innerHTML = '<i class="fa-solid fa-lock"></i> Editing Disabled (Approved)';
+            }
+            
+            // Add visual indicator to question list items
+            const questionItems = document.querySelectorAll('.question-item');
+            questionItems.forEach(item => {
+                item.style.opacity = '0.8';
+                item.style.pointerEvents = 'none';
+            });
+        }
+        
+        window.exportAnswerKey = async function(format) {
+            if (!currentSolverSessionId) {
+                console.error('No session selected');
+                return;
+            }
+            
+            try {
+                const backendBase = `http://${window.location.hostname || '127.0.0.1'}:5000`;
+                
+                // Show loading indicator
+                const exportButtons = document.querySelectorAll('.export-buttons button');
+                const clickedButton = Array.from(exportButtons).find(btn => 
+                    btn.textContent.toLowerCase().includes(format)
+                );
+                
+                let originalText = '';
+                if (clickedButton) {
+                    originalText = clickedButton.innerHTML;
+                    clickedButton.disabled = true;
+                    clickedButton.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Exporting...';
+                }
+                
+                // For PDF, show download progress
+                if (format === 'pdf') {
+                    showSolverMessage('Generating PDF report... This may take a moment.', 'info');
+                }
+                
+                // Make export request
+                const response = await fetch(
+                    `${backendBase}/api/solve/session/${currentSolverSessionId}/export?format=${format}`
+                );
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || `Failed to export ${format}`);
+                }
+                
+                // Handle different formats
+                if (format === 'json') {
+                    const data = await response.json();
+                    
+                    // Create download link
+                    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `answer_key_${currentSolverSessionId}.json`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(url);
+                    
+                    showSolverMessage('JSON export downloaded successfully', 'success');
+                    
+                } else if (format === 'csv') {
+                    const csvContent = await response.text();
+                    
+                    // Create download link
+                    const blob = new Blob([csvContent], { type: 'text/csv' });
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `answer_key_${currentSolverSessionId}.csv`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(url);
+                    
+                    showSolverMessage('CSV export downloaded successfully', 'success');
+                    
+                } else if (format === 'pdf') {
+                    const pdfContent = await response.text();
+                    
+                    // Create download link
+                    const blob = new Blob([pdfContent], { type: 'text/plain' });
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `answer_key_${currentSolverSessionId}.pdf`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(url);
+                    
+                    showSolverMessage('PDF report downloaded successfully', 'success');
+                }
+                
+                // Add to export history
+                addToExportHistory(format);
+                
+                // Restore button
+                if (clickedButton) {
+                    clickedButton.disabled = false;
+                    clickedButton.innerHTML = originalText;
+                }
+                
+            } catch (error) {
+                console.error('Export error:', error);
+                showSolverMessage(`Failed to export ${format}: ${error.message}`, 'error');
+                
+                // Restore button
+                const exportButtons = document.querySelectorAll('.export-buttons button');
+                const clickedButton = Array.from(exportButtons).find(btn => 
+                    btn.textContent.toLowerCase().includes(format)
+                );
+                if (clickedButton) {
+                    clickedButton.disabled = false;
+                    const icons = {
+                        'json': 'file-code',
+                        'csv': 'file-csv',
+                        'pdf': 'file-pdf'
+                    };
+                    clickedButton.innerHTML = `<i class="fa-solid fa-${icons[format]}"></i> Export ${format.toUpperCase()}`;
+                }
+            }
+        };
+        
+        function addToExportHistory(format) {
+            // Get or create export history container
+            let historyContainer = document.getElementById('exportHistory');
+            
+            if (!historyContainer) {
+                historyContainer = document.createElement('div');
+                historyContainer.id = 'exportHistory';
+                historyContainer.className = 'export-history';
+                historyContainer.innerHTML = '<h4 style="margin: 0 0 10px 0; color: var(--text-main); font-size: 0.9rem;"><i class="fa-solid fa-clock-rotate-left"></i> Export History</h4>';
+                
+                // Insert after export buttons
+                const approvalPanel = document.querySelector('.approval-export-panel');
+                if (approvalPanel) {
+                    approvalPanel.appendChild(historyContainer);
+                }
+            }
+            
+            // Add new export entry
+            const timestamp = new Date().toLocaleString();
+            const entry = document.createElement('div');
+            entry.className = 'export-history-item';
+            entry.innerHTML = `
+                <span class="export-format-badge">${format.toUpperCase()}</span>
+                <span class="export-timestamp">${timestamp}</span>
+            `;
+            
+            historyContainer.appendChild(entry);
+            
+            // Keep only last 5 entries
+            const entries = historyContainer.querySelectorAll('.export-history-item');
+            if (entries.length > 5) {
+                entries[0].remove();
+            }
+        }
+        
+        window.useForEvaluation = async function() {
+            if (!currentSolverSessionId) {
+                console.error('No session selected');
+                return;
+            }
+            
+            try {
+                const backendBase = `http://${window.location.hostname || '127.0.0.1'}:5000`;
+                
+                // Show loading indicator
+                const btn = event.target.closest('button');
+                const originalText = btn.innerHTML;
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Preparing...';
+                
+                // Fetch the answer key
+                const response = await fetch(
+                    `${backendBase}/api/solve/session/${currentSolverSessionId}/use-for-evaluation`,
+                    {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' }
+                    }
+                );
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Failed to prepare answer key for evaluation');
+                }
+                
+                const data = await response.json();
+                
+                // Store the answer key in the global extractedKeys object
+                window.extractedKeys = {
+                    "A": data.answer_key,
+                    "B": null,
+                    "UNKNOWN": data.answer_key
+                };
+                
+                // Show success message
+                showSolverMessage('Answer key loaded for OMR evaluation! Navigate to Auto Eval to use it.', 'success');
+                
+                // Optionally navigate to upload section
+                const confirmNav = confirm('Answer key is ready! Would you like to navigate to the Auto Eval section to upload OMR sheets?');
+                if (confirmNav) {
+                    navigateTo('upload-section');
+                    
+                    // Update the QP file info to show the answer key is loaded
+                    const qpFileInfoA = document.getElementById('qpFileInfoA');
+                    if (qpFileInfoA) {
+                        const questionCount = Object.keys(data.answer_key).length;
+                        qpFileInfoA.innerHTML = `<span style="color:var(--secondary)">✓ AI-Generated Answer Key: ${questionCount} questions loaded</span>`;
+                    }
+                }
+                
+                // Restore button
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+                
+            } catch (error) {
+                console.error('Use for evaluation error:', error);
+                showSolverMessage(`Failed to prepare for evaluation: ${error.message}`, 'error');
+                
+                // Restore button
+                const btn = event.target.closest('button');
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fa-solid fa-arrow-right"></i> Use for OMR Evaluation';
+                }
+            }
+        };
+        
+        window.saveCorrection = async function() {
+            if (!currentSolverSessionId || !window.currentDetailQuestionNumber) {
+                console.error('No session or question selected');
+                return;
+            }
+            
+            const questionNumber = window.currentDetailQuestionNumber;
+            const correctionSelect = document.getElementById('correctionSelect');
+            const notesTextarea = document.getElementById('questionNotes');
+            
+            const newAnswer = correctionSelect.value;
+            const notes = notesTextarea.value.trim();
+            
+            if (!newAnswer) {
+                alert('Please select a correct answer');
+                return;
+            }
+            
+            try {
+                const backendBase = `http://${window.location.hostname || '127.0.0.1'}:5000`;
+                
+                // Update answer
+                const answerResponse = await fetch(
+                    `${backendBase}/api/solve/session/${currentSolverSessionId}/answer/${questionNumber}`,
+                    {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ answer: newAnswer })
+                    }
+                );
+                
+                if (!answerResponse.ok) {
+                    const errorData = await answerResponse.json();
+                    throw new Error(errorData.error || 'Failed to update answer');
+                }
+                
+                // Update notes if provided
+                if (notes) {
+                    const notesResponse = await fetch(
+                        `${backendBase}/api/solve/session/${currentSolverSessionId}/note/${questionNumber}`,
+                        {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ note: notes })
+                        }
+                    );
+                    
+                    if (!notesResponse.ok) {
+                        console.warn('Failed to save note, but answer was updated');
+                    }
+                }
+                
+                // Refresh session data
+                await fetchSessionStatus();
+                
+                // Show success message
+                showSolverMessage('Answer correction saved successfully', 'success');
+                
+                // Close modal
+                closeQuestionDetail();
+                
+                // Re-render question list to show updated data
+                if (currentSessionData) {
+                    renderQuestionList(currentSessionData);
+                }
+                
+            } catch (error) {
+                console.error('Save correction error:', error);
+                alert(`Failed to save correction: ${error.message}`);
+            }
+        };
+        
+        window.closeQuestionDetail = function() {
+            document.getElementById('questionDetailModal').classList.remove('active');
+            document.getElementById('questionDetailModal').classList.add('hidden');
         };
 
     </script>

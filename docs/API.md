@@ -17,6 +17,168 @@ Currently, the API does not require authentication. All endpoints are publicly a
 
 ## Endpoints
 
+### AI Question Solver - Dashboard
+
+Get performance monitoring dashboard with solver statistics across all sessions.
+
+**Endpoint:** `/api/solve/dashboard`
+
+**Method:** `GET`
+
+**Authentication:** Required
+
+#### Request Example
+
+```bash
+curl -X GET http://localhost:5000/api/solve/dashboard
+```
+
+```javascript
+// JavaScript/Fetch API
+fetch('http://localhost:5000/api/solve/dashboard', {
+  method: 'GET'
+})
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error('Error:', error));
+```
+
+```python
+# Python/Requests
+import requests
+
+response = requests.get('http://localhost:5000/api/solve/dashboard')
+print(response.json())
+```
+
+#### Success Response
+
+**Status Code:** `200 OK`
+
+**Response Body:**
+
+```json
+{
+  "overview": {
+    "total_sessions": 25,
+    "total_questions": 2500,
+    "total_solved": 2350,
+    "total_unsolvable": 75,
+    "total_errors": 75,
+    "total_corrections": 125,
+    "overall_accuracy": 94.0,
+    "correction_rate": 5.0
+  },
+  "accuracy_trends": [
+    {
+      "date": "2024-01-15",
+      "avg_confidence": 0.875,
+      "question_count": 500
+    },
+    {
+      "date": "2024-01-16",
+      "avg_confidence": 0.892,
+      "question_count": 750
+    }
+  ],
+  "failure_patterns": [
+    {
+      "pattern": "Timeout after 30s",
+      "count": 45
+    },
+    {
+      "pattern": "Parse failed",
+      "count": 30
+    }
+  ],
+  "model_performance_by_type": {
+    "math": {
+      "total": 800,
+      "solved": 750,
+      "avg_confidence": 0.88,
+      "avg_processing_time_ms": 1450.5
+    },
+    "logical": {
+      "total": 600,
+      "solved": 580,
+      "avg_confidence": 0.85,
+      "avg_processing_time_ms": 1320.2
+    },
+    "factual": {
+      "total": 1100,
+      "solved": 1020,
+      "avg_confidence": 0.90,
+      "avg_processing_time_ms": 1180.8
+    }
+  },
+  "generated_at": "2024-01-16T15:30:00.123456"
+}
+```
+
+**Response Fields:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `overview` | object | Summary statistics across all sessions |
+| `overview.total_sessions` | integer | Total number of solver sessions |
+| `overview.total_questions` | integer | Total questions processed across all sessions |
+| `overview.total_solved` | integer | Total questions successfully solved |
+| `overview.total_unsolvable` | integer | Total questions marked as unsolvable |
+| `overview.total_errors` | integer | Total questions with errors |
+| `overview.total_corrections` | integer | Total manual corrections made by users |
+| `overview.overall_accuracy` | float | Overall accuracy percentage (solved/total * 100) |
+| `overview.correction_rate` | float | Correction rate percentage (corrections/total * 100) |
+| `accuracy_trends` | array | Daily accuracy trends over time |
+| `accuracy_trends[].date` | string | Date in YYYY-MM-DD format |
+| `accuracy_trends[].avg_confidence` | float | Average confidence score for that date (0.0-1.0) |
+| `accuracy_trends[].question_count` | integer | Number of questions processed on that date |
+| `failure_patterns` | array | Common failure patterns sorted by frequency |
+| `failure_patterns[].pattern` | string | Error message or failure type |
+| `failure_patterns[].count` | integer | Number of occurrences |
+| `model_performance_by_type` | object | Performance metrics grouped by question type |
+| `model_performance_by_type.{type}.total` | integer | Total questions of this type |
+| `model_performance_by_type.{type}.solved` | integer | Successfully solved questions of this type |
+| `model_performance_by_type.{type}.avg_confidence` | float | Average confidence for this type (0.0-1.0) |
+| `model_performance_by_type.{type}.avg_processing_time_ms` | float | Average processing time in milliseconds |
+| `generated_at` | string | ISO timestamp when dashboard was generated |
+
+#### Use Cases
+
+**Monitoring System Performance:**
+- Track overall accuracy and correction rates
+- Identify trends in solver performance over time
+- Monitor question processing throughput
+
+**Identifying Issues:**
+- Discover common failure patterns (timeouts, parse errors)
+- Identify question types with lower accuracy
+- Find sessions requiring attention
+
+**Performance Optimization:**
+- Compare processing times across question types
+- Identify bottlenecks in the solving pipeline
+- Track improvements after system updates
+
+#### Error Responses
+
+##### 500 Internal Server Error
+
+**Status Code:** `500 Internal Server Error`
+
+**Response Body:**
+
+```json
+{
+  "error": "Failed to generate dashboard data",
+  "error_type": "processing_error",
+  "message": "An error occurred while aggregating session statistics"
+}
+```
+
+**Cause:** An unexpected error occurred while processing session logs or calculating statistics.
+
+---
+
 ### Extract Answer Key
 
 Extract answer keys from question paper images or PDFs using AI vision models.

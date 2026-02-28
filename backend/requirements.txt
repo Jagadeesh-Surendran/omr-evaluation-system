@@ -11,3 +11,7 @@ ollama
 pymupdf
 pyserial
 flask-socketio
+hypothesis
+pytest
+pytest-cov
+psutil

@@ -76,9 +76,21 @@ temp_*
 htmlcov/
 .pytest_cache/
 
+# Hypothesis test data
+.hypothesis/
+backend/.hypothesis/
+
 # Jupyter Notebook
 .ipynb_checkpoints
 
 # Environment variables
 .env
 .env.local
+
+# Solver sessions (user data)
+backend/solver_sessions/
+backend/uploads/
+backend/logs/
+
+# Temporary files
+FRONTEND_TROUBLESHOOTING.md

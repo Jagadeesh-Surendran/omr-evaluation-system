@@ -38,8 +38,8 @@ class ExtractionConfig:
     """
     
     # Extraction behavior
-    max_extraction_passes: int = 3
-    extraction_timeout_seconds: int = 30
+    max_extraction_passes: int = 5  # Increased from 3 to 5 for better coverage
+    extraction_timeout_seconds: int = 45  # Increased from 30 to 45 for large question sets
     
     # Model configuration
     primary_model: str = "moondream"
@@ -52,6 +52,9 @@ class ExtractionConfig:
     
     # Logging
     log_path: str = "debug_ollama.log"
+    
+    # Extraction validation
+    expected_question_count: Optional[int] = None  # For validation feedback
     
     def __post_init__(self):
         """Validate configuration parameters after initialization."""
@@ -87,15 +90,17 @@ class ExtractionConfig:
 # Purpose: Provides comprehensive guidance to the AI model with clear rules
 #          and examples. This is the primary extraction strategy that works
 #          best when the model needs detailed context about the task.
-PROMPT_PASS_1 = """You are an answer key extraction system. Analyze this question paper image and extract ONLY the correct answers.
+PROMPT_PASS_1 = """You are an answer key extraction system. Analyze this question paper image and extract ALL the correct answers you can see.
 
 Return a JSON object with this exact format:
-{"1":"A","2":"C","3":"B","4":"D","5":"E"}
+{"1":"A","2":"C","3":"B","4":"D","5":"E",...}
 
-Rules:
+IMPORTANT:
+- Extract ALL questions visible in the image (could be 10, 50, 100+ questions)
 - Keys must be question numbers (as strings)
 - Values must be single letters: A, B, C, D, or E
-- Include only questions with clearly visible answers
+- Include EVERY question with a clearly visible answer
+- Do not stop at 5 or 10 questions - extract ALL of them
 - If no answers are found, return {}
 - Do not include any explanation or markdown formatting
 """
@@ -104,13 +109,13 @@ Rules:
 # Purpose: Uses minimal instructions to avoid over-complicating the task.
 #          Some models perform better with concise prompts. This strategy
 #          is used as a fallback when the detailed prompt fails.
-PROMPT_PASS_2 = """Extract answers as JSON: {"1":"A","2":"B"}. Nothing else."""
+PROMPT_PASS_2 = """Extract ALL answers from this image as JSON: {"1":"A","2":"B",...,"100":"C"}. Extract every question you see. Nothing else."""
 
 # Pass 3: Alternative phrasing with different instruction style
 # Purpose: Rephrases the extraction request using different terminology.
 #          This can help when the model misunderstands the previous prompts.
 #          Uses "list" instead of "extract" and emphasizes JSON output format.
-PROMPT_PASS_3 = """List the correct answer for each question number in JSON format like {"1":"A","2":"C"}. Only output the JSON object."""
+PROMPT_PASS_3 = """List the correct answer for EVERY question number in the image in JSON format like {"1":"A","2":"C",...}. Include all questions from 1 to the last question number. Only output the JSON object."""
 
 
 # ---------------------------------------------------------------------------
@@ -449,12 +454,13 @@ def _normalise_json_dict(raw: dict) -> dict:
     return out
 
 
-def validate_extraction_result(result: dict) -> tuple[dict, list[str]]:
+def validate_extraction_result(result: dict, expected_count: int = None) -> tuple[dict, list[str]]:
     """
     Validate and clean extraction results.
 
     Args:
         result: Raw extraction dict (keys can be any type, values can be any type)
+        expected_count: Optional expected number of questions (for validation feedback)
 
     Returns:
         Tuple of (cleaned_dict, warnings_list)
@@ -466,6 +472,7 @@ def validate_extraction_result(result: dict) -> tuple[dict, list[str]]:
     - All values must be single letters A-E
     - Duplicate question numbers are removed (keeping first occurrence)
     - Warning generated if < 5 question-answer pairs
+    - Warning generated if extracted count is significantly less than expected
 
     Example:
         result = {"1": "A", "2": "C", "1": "B", "3": "X", "-1": "D"}
@@ -513,6 +520,14 @@ def validate_extraction_result(result: dict) -> tuple[dict, list[str]]:
     # Check for low count warning
     if len(cleaned) < 5:
         warnings.append(f"Only {len(cleaned)} answers extracted (< 5)")
+    
+    # Check against expected count if provided
+    if expected_count and len(cleaned) < expected_count:
+        percentage = (len(cleaned) / expected_count) * 100
+        warnings.append(
+            f"Extracted {len(cleaned)} of {expected_count} expected questions ({percentage:.1f}%). "
+            f"Consider re-uploading with better image quality or try a different image format."
+        )
 
     return cleaned, warnings
 
@@ -671,7 +686,10 @@ def extract_answer_key_from_image(
                     normalized = _normalise_json_dict(parsed)
                     if normalized:
                         # Validate and clean the result
-                        validated, warnings = validate_extraction_result(normalized)
+                        validated, warnings = validate_extraction_result(
+                            normalized, 
+                            expected_count=config.expected_question_count
+                        )
                         if validated:
                             pass_duration = (time.time() - pass_start_time) * 1000
                             logger.log_attempt_result(
@@ -694,7 +712,10 @@ def extract_answer_key_from_image(
                 regex_result = _regex_fallback(raw_text)
                 if regex_result:
                     # Validate and clean the regex result
-                    validated, warnings = validate_extraction_result(regex_result)
+                    validated, warnings = validate_extraction_result(
+                        regex_result,
+                        expected_count=config.expected_question_count
+                    )
                     if validated:
                         pass_duration = (time.time() - pass_start_time) * 1000
                         logger.log_attempt_result(
