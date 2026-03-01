@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verify AI Phase 1 Styling - Task 4.12</title>
+  <link rel="stylesheet" href="../style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    body {
+      padding: 20px;
+    }
+    .test-section {
+      margin-bottom: 40px;
+      padding: 20px;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .test-section h2 {
+      margin-bottom: 20px;
+      color: #1f2937;
+      border-bottom: 2px solid #e5e7eb;
+      padding-bottom: 10px;
+    }
+    .test-description {
+      margin-bottom: 15px;
+      padding: 10px;
+      background: #f3f4f6;
+      border-left: 4px solid #3b82f6;
+      font-size: 14px;
+      color: #4b5563;
+    }
+  </style>
+</head>
+<body>
+  <h1>Task 4.12: AI Phase 1 Screen and Review Modal Styling Verification</h1>
+  <p style="margin-bottom: 30px; color: #6b7280;">
+    This page verifies the enhanced styling for the question paper upload zone and answer key review modal.
+  </p>
+
+  <!-- Test 1: Question Paper Upload Zone -->
+  <div class="test-section">
+    <h2>1. Question Paper Upload Zone</h2>
+    <div class="test-description">
+      <strong>Expected:</strong> Upload zone with brain icon, gradient background, hover effects, and floating animation.
+    </div>
+    
+    <div class="ai-upload-section">
+      <div class="upload-zone ai-upload" id="test-upload-zone">
+        <label class="upload-label">
+          <i class="fas fa-brain"></i>
+          <h4>Question Paper (Multi-Set)</h4>
+          <p>Upload question paper with multiple sets</p>
+          <span class="file-formats">Supports: PDF, JPG, PNG</span>
+        </label>
+      </div>
+    </div>
+    
+    <div style="margin-top: 15px; padding: 10px; background: #dbeafe; border-radius: 4px;">
+      <strong>✓ Hover Test:</strong> Hover over the upload zone to see elevation, border color change, and icon animation.
+    </div>
+  </div>
+
+  <!-- Test 2: Answer Key Review Modal Tabs -->
+  <div class="test-section">
+    <h2>2. Answer Key Review Modal - Set Tabs</h2>
+    <div class="test-description">
+      <strong>Expected:</strong> Tabs with hover effects, active state with underline animation, and question count badges.
+    </div>
+    
+    <div class="set-tabs">
+      <button class="set-tab active" onclick="switchTab(this, 'A')">
+        Set A
+        <span class="question-count">20 questions</span>
+      </button>
+      <button class="set-tab" onclick="switchTab(this, 'B')">
+        Set B
+        <span class="question-count">20 questions</span>
+      </button>
+      <button class="set-tab" onclick="switchTab(this, 'C')">
+        Set C
+        <span class="question-count">20 questions</span>
+      </button>
+      <button class="set-tab" onclick="switchTab(this, 'D')">
+        Set D
+        <span class="question-count">20 questions</span>
+      </button>
+    </div>
+    
+    <div style="margin-top: 15px; padding: 10px; background: #dbeafe; border-radius: 4px;">
+      <strong>✓ Interaction Test:</strong> Click tabs to see active state animation. Hover to see background change.
+    </div>
+  </div>
+
+  <!-- Test 3: Answer Key Grid with Hover and Focus States -->
+  <div class="test-section">
+    <h2>3. Answer Key Grid - Hover and Focus States</h2>
+    <div class="test-description">
+      <strong>Expected:</strong> Grid items with hover elevation, focus ring, and edited state highlighting.
+    </div>
+    
+    <div class="answer-key-grid-container">
+      <div class="answer-key-grid">
+        <div class="answer-item">
+          <span class="question-num">Q1</span>
+          <select class="answer-select">
+            <option value="A" selected>A</option>
+            <option value="B">B</option>
+            <option value="C">C</option>
+            <option value="D">D</option>
+            <option value="E">E</option>
+          </select>
+        </div>
+        
+        <div class="answer-item">
+          <span class="question-num">Q2</span>
+          <select class="answer-select">
+            <option value="A">A</option>
+            <option value="B" selected>B</option>
+            <option value="C">C</option>
+            <option value="D">D</option>
+            <option value="E">E</option>
+          </select>
+        </div>
+        
+        <div class="answer-item edited">
+          <span class="question-num">Q3</span>
+          <select class="answer-select">
+            <option value="A">A</option>
+            <option value="B">B</option>
+            <option value="C" selected>C</option>
+            <option value="D">D</option>
+            <option value="E">E</option>
+          </select>
+          <i class="fas fa-edit edit-indicator" title="Edited"></i>
+        </div>
+        
+        <div class="answer-item">
+          <span class="question-num">Q4</span>
+          <select class="answer-select">
+            <option value="A">A</option>
+            <option value="B">B</option>
+            <option value="C">C</option>
+            <option value="D" selected>D</option>
+            <option value="E">E</option>
+          </select>
+        </div>
+        
+        <div class="answer-item">
+          <span class="question-num">Q5</span>
+          <select class="answer-select">
+            <option value="A">A</option>
+            <option value="B">B</option>
+            <option value="C">C</option>
+            <option value="D">D</option>
+            <option value="E" selected>E</option>
+          </select>
+        </div>
+        
+        <div class="answer-item edited">
+          <span class="question-num">Q6</span>
+          <select class="answer-select">
+            <option value="A" selected>A</option>
+            <option value="B">B</option>
+            <option value="C">C</option>
+            <option value="D">D</option>
+            <option value="E">E</option>
+          </select>
+          <i class="fas fa-edit edit-indicator" title="Edited"></i>
+        </div>
+      </div>
+    </div>
+    
+    <div style="margin-top: 15px; padding: 10px; background: #dbeafe; border-radius: 4px;">
+      <strong>✓ Interaction Tests:</strong>
+      <ul style="margin: 10px 0 0 20px; color: #4b5563;">
+        <li>Hover over answer items to see elevation and border color change</li>
+        <li>Click on a select dropdown to see focus ring effect</li>
+        <li>Note the edited items (Q3, Q6) with warning color and pulsing edit indicator</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Test 4: Modal Action Buttons -->
+  <div class="test-section">
+    <h2>4. Modal Action Buttons</h2>
+    <div class="test-description">
+      <strong>Expected:</strong> Buttons with ripple effect on hover and enhanced shadows.
+    </div>
+    
+    <div id="answer-key-review-modal">
+      <div class="modal-actions">
+        <button class="btn-outline">
+          <i class="fas fa-download"></i>
+          Download as CSV
+        </button>
+        <button class="btn-primary">
+          <i class="fas fa-check"></i>
+          Confirm and Continue
+        </button>
+      </div>
+    </div>
+    
+    <div style="margin-top: 15px; padding: 10px; background: #dbeafe; border-radius: 4px;">
+      <strong>✓ Hover Test:</strong> Hover over buttons to see ripple effect and elevation change.
+    </div>
+  </div>
+
+  <!-- Test 5: Responsive Design -->
+  <div class="test-section">
+    <h2>5. Responsive Design</h2>
+    <div class="test-description">
+      <strong>Expected:</strong> Layout adapts to different screen sizes (resize browser window to test).
+    </div>
+    
+    <div style="padding: 15px; background: #f3f4f6; border-radius: 8px;">
+      <h4 style="margin-bottom: 10px;">Breakpoints:</h4>
+      <ul style="margin: 0 0 0 20px; color: #4b5563; line-height: 1.8;">
+        <li><strong>Desktop (>1024px):</strong> Full grid layout with 140px minimum column width</li>
+        <li><strong>Tablet (769px-1024px):</strong> Grid with 130px minimum column width</li>
+        <li><strong>Mobile (≤768px):</strong> Grid with 110px minimum column width, stacked buttons</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Test Summary -->
+  <div class="test-section" style="background: linear-gradient(135deg, #dbeafe 0%, #e0e7ff 100%); border: 2px solid #3b82f6;">
+    <h2 style="color: #1e40af;">✓ Task 4.12 Completion Checklist</h2>
+    <div style="padding: 10px;">
+      <ul style="list-style: none; padding: 0;">
+        <li style="padding: 8px; margin-bottom: 5px; background: white; border-radius: 4px;">
+          ✅ <strong>Question paper upload zone styled</strong> with brain icon, gradient, and animations
+        </li>
+        <li style="padding: 8px; margin-bottom: 5px; background: white; border-radius: 4px;">
+          ✅ <strong>Modal styling enhanced</strong> with tabs, grid layout, and smooth animations
+        </li>
+        <li style="padding: 8px; margin-bottom: 5px; background: white; border-radius: 4px;">
+          ✅ <strong>Hover and focus states added</strong> for editable answers with visual feedback
+        </li>
+        <li style="padding: 8px; margin-bottom: 5px; background: white; border-radius: 4px;">
+          ✅ <strong>Action buttons styled</strong> with ripple effects and enhanced shadows
+        </li>
+        <li style="padding: 8px; margin-bottom: 5px; background: white; border-radius: 4px;">
+          ✅ <strong>Responsive design implemented</strong> for mobile, tablet, and desktop
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <script>
+    // Tab switching functionality
+    function switchTab(button, set) {
+      // Remove active class from all tabs
+      document.querySelectorAll('.set-tab').forEach(tab => {
+        tab.classList.remove('active');
+      });
+      
+      // Add active class to clicked tab
+      button.classList.add('active');
+      
+      console.log('Switched to Set', set);
+    }
+
+    // Simulate drag over effect
+    const uploadZone = document.getElementById('test-upload-zone');
+    let isDragging = false;
+
+    uploadZone.addEventListener('dragenter', (e) => {
+      e.preventDefault();
+      uploadZone.classList.add('drag-over');
+    });
+
+    uploadZone.addEventListener('dragleave', (e) => {
+      e.preventDefault();
+      uploadZone.classList.remove('drag-over');
+    });
+
+    uploadZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+    });
+
+    uploadZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      uploadZone.classList.remove('drag-over');
+      alert('File drop detected! (This is a test page, no actual upload occurs)');
+    });
+
+    // Log interactions for testing
+    document.querySelectorAll('.answer-select').forEach(select => {
+      select.addEventListener('focus', () => {
+        console.log('Select focused - focus ring should be visible');
+      });
+      
+      select.addEventListener('change', (e) => {
+        console.log('Answer changed to:', e.target.value);
+      });
+    });
+
+    console.log('✓ Task 4.12 styling verification page loaded');
+    console.log('✓ All interactive elements are ready for testing');
+  </script>
+</body>
+</html>

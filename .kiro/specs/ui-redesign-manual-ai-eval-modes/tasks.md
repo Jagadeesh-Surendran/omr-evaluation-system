@@ -73,7 +73,7 @@ This implementation plan breaks down the EvalGenius AI OMR evaluation system UI 
   - Add mode validation and error handling
   - _Requirements: 1.4, 1.5_
 
-- [ ] 2.3 Style mode selection screen
+- [x] 2.3 Style mode selection screen
   - Create responsive grid layout for mode cards
   - Add CSS animations for hover and selection states
   - Ensure mobile-friendly layout (stack cards vertically on small screens)
@@ -172,7 +172,7 @@ This implementation plan breaks down the EvalGenius AI OMR evaluation system UI 
   - **Validates: Requirements 2.8, 3.6, 3.13**
   - Test that evaluation calls correct endpoint with correct parameters for each mode
 
-- [ ] 3.17 Style manual workflow screen
+- [x] 3.17 Style manual workflow screen
   - Create responsive layout for upload zones (side-by-side on desktop, stacked on mobile)
   - Style file lists with icons, filenames, and sizes
   - Add visual feedback for drag-and-drop (hover states, drop zones)
@@ -287,7 +287,7 @@ This implementation plan breaks down the EvalGenius AI OMR evaluation system UI 
   - Handle response with form_type for each student
   - _Requirements: 3.13, 3.14, 3.15_
 
-- [x] 5.4 Style AI phase 2 screen
+- [~] 5.4 Style AI phase 2 screen
   - Style answer keys summary section with set badges
   - Style OMR upload zone
   - Add responsive layout
@@ -526,7 +526,7 @@ This implementation plan breaks down the EvalGenius AI OMR evaluation system UI 
   - **Validates: Requirements 7.10**
   - Test that success toast displays after successful export
 
-- [x] 8.7 Implement file download utilities
+- [ ] 8.7 Implement file download utilities
   - Create `downloadFile(content, filename, mimeType)` function for text files
   - Create `downloadBlob(blob, filename)` function for binary files
   - Handle browser compatibility (create temporary anchor element, click, remove)
@@ -534,7 +534,7 @@ This implementation plan breaks down the EvalGenius AI OMR evaluation system UI 
 
 ### 9. PDF Upload Support
 
-- [ ] 9.1 Implement PDF file handling
+- [~] 9.1 Implement PDF file handling
   - Update file type validation to accept PDF files
   - Display PDF icon for PDF files in file lists
   - Send PDF files to backend without client-side conversion
@@ -545,7 +545,7 @@ This implementation plan breaks down the EvalGenius AI OMR evaluation system UI 
   - **Validates: Requirements 8.1, 8.2, 8.3**
   - Test that PDF files are accepted, displayed with PDF icon, and sent to backend
 
-- [ ] 9.3 Implement mixed file type support
+- [~] 9.3 Implement mixed file type support
   - Allow uploading both PDF and image files in same batch
   - Display appropriate icons for each file type
   - _Requirements: 8.7_
@@ -555,24 +555,24 @@ This implementation plan breaks down the EvalGenius AI OMR evaluation system UI 
   - **Validates: Requirements 8.7**
   - Test that batches with both PDF and image files are accepted and processed
 
-- [ ] 9.5 Update progress tracking for PDFs
+- [~] 9.5 Update progress tracking for PDFs
   - Display "Processing page X of PDF" message when handling PDFs
   - Count each PDF page as separate sheet for progress calculation
   - _Requirements: 8.6_
 
-- [ ] 9.6 Update results display for PDFs
+- [~] 9.6 Update results display for PDFs
   - Display PDF filename with page number for each student (e.g., "exam.pdf - Page 1")
   - _Requirements: 8.10_
 
 
 ### 10. Student Database Integration
 
-- [ ] 10.1 Add student database import button
+- [~] 10.1 Add student database import button
   - Add "Import Student Database" button to results view
   - Create file upload dialog for CSV files
   - _Requirements: 9.1, 9.2_
 
-- [ ] 10.2 Implement student database linking
+- [~] 10.2 Implement student database linking
   - Create `linkStudentDatabase(csvFile)` function
   - Parse CSV with roll number and name columns
   - Call `/api/link_db` endpoint
@@ -580,7 +580,7 @@ This implementation plan breaks down the EvalGenius AI OMR evaluation system UI 
   - Update results table with student names
   - _Requirements: 9.3, 9.4, 9.5, 9.6_
 
-- [ ] 10.3 Handle database linking results
+- [~] 10.3 Handle database linking results
   - Display success message with count of linked names
   - Preserve unmatched results with placeholder names
   - Allow re-importing to correct mistakes
@@ -589,13 +589,13 @@ This implementation plan breaks down the EvalGenius AI OMR evaluation system UI 
 
 ### 11. Error Handling and Validation
 
-- [ ] 11.1 Implement comprehensive error handling
+- [~] 11.1 Implement comprehensive error handling
   - Create `handleError(error, type)` function with error type enum
   - Define error types: FILE_UPLOAD, FILE_VALIDATION, API_ERROR, EXTRACTION_ERROR, EVALUATION_ERROR, EXPORT_ERROR
   - Generate user-friendly error messages with suggestions for each type
   - _Requirements: 11.1, 11.2, 11.3, 11.5_
 
-- [ ] 11.2 Create error modal component
+- [~] 11.2 Create error modal component
   - Build modal to display error message and suggestions
   - Show contextual help based on error type
   - Add "Retry" button for recoverable errors
@@ -606,7 +606,7 @@ This implementation plan breaks down the EvalGenius AI OMR evaluation system UI 
   - **Validates: Requirements 11.1, 11.2, 11.5**
   - Test that error conditions display error toast with failure reason and suggestions
 
-- [ ] 11.4 Implement CSV header handling
+- [~] 11.4 Implement CSV header handling
   - Detect and skip header row if present (check for "question" keyword)
   - Parse CSV with or without header
   - _Requirements: 15.2_
@@ -616,13 +616,13 @@ This implementation plan breaks down the EvalGenius AI OMR evaluation system UI 
   - **Validates: Requirements 15.2**
   - Test that CSVs with or without headers are parsed correctly
 
-- [ ] 11.6 Add validation feedback
+- [~] 11.6 Add validation feedback
   - Display inline validation errors for file uploads
   - Show validation status icons (checkmark for valid, X for invalid)
   - Highlight invalid fields with red borders
   - _Requirements: 11.6, 11.7, 11.8, 11.9_
 
-- [ ] 11.7 Implement retry logic
+- [~] 11.7 Implement retry logic
   - Add retry functionality for failed API calls
   - Implement exponential backoff for transient failures
   - Display retry count and status
@@ -631,36 +631,36 @@ This implementation plan breaks down the EvalGenius AI OMR evaluation system UI 
 
 ### 12. Navigation and Layout
 
-- [ ] 12.1 Create navigation header
+- [~] 12.1 Create navigation header
   - Build header with logo, mode indicator, and action buttons
   - Add "Home" button to return to mode selection
   - Display current mode name in header
   - Add "Help" button
   - _Requirements: 12.5, 12.7, 12.9, 20.1_
 
-- [ ] 12.2 Implement progress indicator
+- [~] 12.2 Implement progress indicator
   - Create step indicator showing: Mode Selection → Upload → Processing → Results
   - Highlight current step
   - Disable future steps until prerequisites met
   - _Requirements: 12.1, 12.2, 12.3, 12.4_
 
-- [ ] 12.3 Implement breadcrumb navigation
+- [~] 12.3 Implement breadcrumb navigation
   - Display breadcrumb showing current location
   - Make breadcrumb items clickable to navigate back
   - _Requirements: 12.6_
 
-- [ ] 12.4 Add keyboard shortcuts
+- [~] 12.4 Add keyboard shortcuts
   - Implement Enter key to submit forms
   - Implement Esc key to close modals
   - Add keyboard navigation for tabs and dropdowns
   - _Requirements: 12.10, 18.2_
 
-- [ ] 12.5 Implement session warnings
+- [~] 12.5 Implement session warnings
   - Warn user before clearing session data if results exist
   - Confirm before navigating away with unsaved data
   - _Requirements: 10.7_
 
-- [ ] 12.6 Style navigation components
+- [~] 12.6 Style navigation components
   - Create consistent header styling across all screens
   - Style progress indicator with colors and icons
   - Add breadcrumb styling with separators
@@ -669,19 +669,19 @@ This implementation plan breaks down the EvalGenius AI OMR evaluation system UI 
 
 ### 13. Upload Zone Enhancements
 
-- [ ] 13.1 Add upload zone labels and icons
+- [~] 13.1 Add upload zone labels and icons
   - Display clear labels for each upload zone (OMR Answer Sheets, Answer Key CSV, Question Paper)
   - Add appropriate icons (documents, spreadsheet, brain)
   - Show accepted formats below each zone
   - _Requirements: 13.1, 13.2, 13.3, 13.4, 13.5, 13.6, 13.7, 13.8, 13.9_
 
-- [ ] 13.2 Implement drag-and-drop visual feedback
+- [~] 13.2 Implement drag-and-drop visual feedback
   - Add hover state when dragging files over upload zone
   - Change border color and background on drag over
   - Show "Drop files here" message
   - _Requirements: 13.3_
 
-- [ ] 13.3 Add example file format information
+- [~] 13.3 Add example file format information
   - Display example CSV format below answer key upload zone
   - Add "Download Sample CSV" link
   - Show tooltip with format details on hover
@@ -690,60 +690,60 @@ This implementation plan breaks down the EvalGenius AI OMR evaluation system UI 
 
 ### 14. Batch Processing Performance
 
-- [ ] 14.1 Implement batch size validation
+- [~] 14.1 Implement batch size validation
   - Validate maximum 200 sheets per batch
   - Validate maximum 100MB total upload size
   - Display error if limits exceeded
   - _Requirements: 14.3, 14.4, 14.5_
 
-- [ ] 14.2 Add batch processing indicators
+- [~] 14.2 Add batch processing indicators
   - Display estimated processing time based on batch size
   - Show processing speed (sheets per minute) in progress modal
   - _Requirements: 14.6, 14.8_
 
-- [ ] 14.3 Optimize UI responsiveness
+- [~] 14.3 Optimize UI responsiveness
   - Use requestAnimationFrame for progress updates
   - Debounce search and filter operations
   - Implement virtual scrolling for large result tables (future enhancement)
   - _Requirements: 14.7_
 
-- [ ] 14.4 Add performance logging
+- [~] 14.4 Add performance logging
   - Log batch size, processing time, and speed metrics
   - Send performance data to analytics (if configured)
   - _Requirements: 14.10_
 
 ### 15. Help and Documentation
 
-- [ ] 15.1 Create help modal
+- [~] 15.1 Create help modal
   - Build modal with tabs for different help topics
   - Add step-by-step guides for Manual and AI modes
   - Include troubleshooting tips for common issues
   - _Requirements: 20.1, 20.2, 20.3, 20.5_
 
-- [ ] 15.2 Add example files for download
+- [~] 15.2 Add example files for download
   - Provide sample answer key CSV
   - Provide sample student database CSV
   - Add download links in help modal
   - _Requirements: 20.4_
 
-- [ ] 15.3 Implement contextual help tooltips
+- [~] 15.3 Implement contextual help tooltips
   - Add tooltips to upload zones explaining file requirements
   - Add tooltips to buttons explaining their function
   - Add tooltips to options explaining their effect
   - _Requirements: 1.3, 20.6_
 
-- [ ] 15.4 Create quick start guide
+- [~] 15.4 Create quick start guide
   - Display quick start guide on first use (check localStorage flag)
   - Highlight key features and workflow steps
   - Add "Don't show again" checkbox
   - _Requirements: 20.7, 20.8_
 
-- [ ] 15.5 Add "What's New" section
+- [~] 15.5 Add "What's New" section
   - Display feature updates and improvements
   - Show version number
   - _Requirements: 20.9_
 
-- [ ] 15.6 Add links to external documentation
+- [~] 15.6 Add links to external documentation
   - Link to video tutorials (if available)
   - Link to full documentation site
   - _Requirements: 20.10_
@@ -751,31 +751,31 @@ This implementation plan breaks down the EvalGenius AI OMR evaluation system UI 
 
 ### 16. Responsive Design
 
-- [ ] 16.1 Implement responsive breakpoints
+- [~] 16.1 Implement responsive breakpoints
   - Define CSS media queries for breakpoints: 768px (tablet), 1024px (desktop), 1440px (large desktop)
   - Test layouts at each breakpoint
   - _Requirements: 17.1, 17.10_
 
-- [ ] 16.2 Optimize mobile layouts
+- [~] 16.2 Optimize mobile layouts
   - Stack upload zones vertically on screens < 1024px
   - Make results table horizontally scrollable on small screens
   - Collapse navigation to hamburger menu on screens < 768px
   - Scale progress modal for different screen sizes
   - _Requirements: 17.2, 17.3, 17.4, 17.5, 17.6_
 
-- [ ] 16.3 Ensure touch-friendly controls
+- [~] 16.3 Ensure touch-friendly controls
   - Use minimum 44x44px button sizes
   - Add adequate spacing between interactive elements
   - Test touch interactions on tablet/mobile devices
   - _Requirements: 17.7_
 
-- [ ] 16.4 Maintain readability
+- [~] 16.4 Maintain readability
   - Use minimum 14px font size
   - Ensure adequate line height and spacing
   - Test readability on small screens
   - _Requirements: 17.9_
 
-- [ ] 16.5 Test on multiple browsers
+- [~] 16.5 Test on multiple browsers
   - Test on Chrome 90+, Firefox 88+, Safari 14+, Edge 90+
   - Verify functionality and styling consistency
   - Fix browser-specific issues
@@ -783,41 +783,41 @@ This implementation plan breaks down the EvalGenius AI OMR evaluation system UI 
 
 ### 17. Accessibility Compliance
 
-- [ ] 17.1 Add semantic HTML structure
+- [~] 17.1 Add semantic HTML structure
   - Use semantic elements: nav, main, section, article, header, footer
   - Ensure proper heading hierarchy (h1, h2, h3)
   - _Requirements: 18.9_
 
-- [ ] 17.2 Implement keyboard navigation
+- [~] 17.2 Implement keyboard navigation
   - Ensure all interactive elements are keyboard accessible (Tab, Enter, Esc)
   - Add visible focus indicators to all focusable elements
   - Test full keyboard navigation flow
   - _Requirements: 18.2, 18.5_
 
-- [ ] 17.3 Add ARIA labels and attributes
+- [~] 17.3 Add ARIA labels and attributes
   - Add ARIA labels to all form controls and buttons
   - Use ARIA live regions for dynamic updates (progress, toasts)
   - Add ARIA roles where semantic HTML is insufficient
   - _Requirements: 18.3, 18.6_
 
-- [ ] 17.4 Add alt text to images and icons
+- [~] 17.4 Add alt text to images and icons
   - Provide descriptive alt text for all images
   - Use aria-label for icon-only buttons
   - _Requirements: 18.1_
 
 
-- [ ] 17.5 Ensure color contrast compliance
+- [~] 17.5 Ensure color contrast compliance
   - Verify color contrast ratio of at least 4.5:1 for all text
   - Test with color contrast analyzer tools
   - Adjust colors if needed to meet WCAG AA standards
   - _Requirements: 18.4_
 
-- [ ] 17.6 Implement skip navigation
+- [~] 17.6 Implement skip navigation
   - Add "Skip to main content" link at top of page
   - Ensure skip link is keyboard accessible and visible on focus
   - _Requirements: 18.8_
 
-- [ ] 17.7 Test with screen readers
+- [~] 17.7 Test with screen readers
   - Test with NVDA (Windows) and JAWS screen readers
   - Verify all content is announced correctly
   - Test navigation flow with screen reader
@@ -829,31 +829,31 @@ This implementation plan breaks down the EvalGenius AI OMR evaluation system UI 
 
 ### 18. Data Privacy and Security
 
-- [ ] 18.1 Implement client-side file processing
+- [~] 18.1 Implement client-side file processing
   - Process and validate files client-side before sending to backend
   - Don't store sensitive data in localStorage (use sessionStorage only)
   - _Requirements: 19.1, 19.4_
 
-- [ ] 18.2 Ensure secure API communication
+- [~] 18.2 Ensure secure API communication
   - Use HTTPS for all API calls
   - Validate API responses before processing
   - _Requirements: 19.2_
 
-- [ ] 18.3 Implement data cleanup
+- [~] 18.3 Implement data cleanup
   - Clear all session data when user logs out or closes tab
   - Provide "Clear All Data" button in settings
   - _Requirements: 19.5, 19.9_
 
-- [ ] 18.4 Add privacy notice
+- [~] 18.4 Add privacy notice
   - Display privacy notice on first use
   - Explain data handling and storage practices
   - _Requirements: 19.6_
 
-- [ ] 18.5 Implement client-side student database linking
+- [~] 18.5 Implement client-side student database linking
   - Link student names client-side only (don't send names to backend during evaluation)
   - _Requirements: 19.7, 19.8_
 
-- [ ] 18.6 Add audit logging
+- [~] 18.6 Add audit logging
   - Log all file uploads and evaluations (without sensitive data)
   - Store logs for debugging and analytics
   - _Requirements: 19.10_
@@ -919,7 +919,7 @@ This implementation plan breaks down the EvalGenius AI OMR evaluation system UI 
   - Test answer key extraction and editing
   - Test set detection and results display
 
-- [ ] 19.10 Run all tests and fix failures
+- [~] 19.10 Run all tests and fix failures
   - Execute all unit tests
   - Execute all property-based tests (minimum 100 runs each)
   - Execute all integration tests
@@ -932,25 +932,25 @@ This implementation plan breaks down the EvalGenius AI OMR evaluation system UI 
 
 ### 20. Polish and Final Touches
 
-- [ ] 20.1 Optimize performance
+- [~] 20.1 Optimize performance
   - Minify JavaScript and CSS files
   - Optimize images and icons
   - Implement lazy loading for non-critical resources
   - Test page load time and optimize
 
-- [ ] 20.2 Add loading states
+- [~] 20.2 Add loading states
   - Add skeleton loaders for data loading
   - Add spinner for API calls
   - Add disabled states for buttons during processing
   - Ensure smooth transitions between states
 
-- [ ] 20.3 Implement animations and transitions
+- [~] 20.3 Implement animations and transitions
   - Add smooth transitions for screen changes
   - Add fade-in animations for modals
   - Add progress bar animations
   - Keep animations subtle and performant
 
-- [ ] 20.4 Add visual polish
+- [~] 20.4 Add visual polish
   - Refine color scheme and ensure consistency
   - Add shadows and depth to cards and modals
   - Ensure consistent spacing and alignment
@@ -962,33 +962,33 @@ This implementation plan breaks down the EvalGenius AI OMR evaluation system UI 
   - Store preference in localStorage
   - Test all screens in dark mode
 
-- [ ] 20.6 Add analytics tracking
+- [~] 20.6 Add analytics tracking
   - Track mode selection
   - Track evaluation starts and completions
   - Track export actions
   - Track errors and failures
 
-- [ ] 20.7 Create user onboarding
+- [~] 20.7 Create user onboarding
   - Add welcome screen for first-time users
   - Add interactive tutorial highlighting key features
   - Add tooltips for first-time actions
 
-- [ ] 20.8 Implement feedback mechanism
+- [~] 20.8 Implement feedback mechanism
   - Add "Send Feedback" button
   - Create feedback form modal
   - Send feedback to backend or email
 
-- [ ] 20.9 Add version information
+- [~] 20.9 Add version information
   - Display version number in footer or settings
   - Add changelog or release notes link
 
-- [ ] 20.10 Final testing and bug fixes
+- [~] 20.10 Final testing and bug fixes
   - Perform end-to-end testing of all workflows
   - Test edge cases and error scenarios
   - Fix any remaining bugs
   - Verify all requirements are met
 
-- [ ] 20.11 Prepare deployment
+- [~] 20.11 Prepare deployment
   - Create production build
   - Set up deployment configuration
   - Test on production environment
